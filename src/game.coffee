@@ -6,34 +6,6 @@ puzzle_y = 160
 puz_canvas.width = 150 * 5
 puz_canvas.height = 150 * 5
 
-sunset = puz_ctx.createLinearGradient 0, 0, 0, puz_canvas.height
-
-sunset.addColorStop 0.000, 'rgb(0, 255, 242)'
-sunset.addColorStop 0.442, 'rgb(107, 99, 255)'
-sunset.addColorStop 0.836, 'rgb(255, 38, 38)'
-sunset.addColorStop 0.934, 'rgb(255, 135, 22)'
-sunset.addColorStop 1.000, 'rgb(255, 252, 0)'
-
-puz_ctx.fillStyle = sunset
-puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
-
-puz_ctx.save()
-t = 20
-puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
-for i in [0..100]
-	puz_ctx.rotate(t / 56)
-	puz_ctx.fillRect(cos(t/6)*150*sin(i/60+t), 50, 15, cos(t/6+i) * 50)
-puz_ctx.restore()
-
-puz_ctx.save()
-t = 200
-puz_ctx.fillStyle = "yellow"
-#puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
-for i in [0..100]
-	puz_ctx.rotate(t / 56)
-	puz_ctx.fillRect(cos(t/6)*150*sin(i/60+t), 50, 1, cos(t/6+i) * 50)
-puz_ctx.restore()
-
 pointers = {}
 
 class Piece
@@ -47,7 +19,7 @@ class Piece
 		@points =
 			for [0..4]
 				x: random() * @puz_w
-				h: random() * @puz_h
+				y: random() * @puz_h
 				piece: @
 	
 	makePath: ->
@@ -217,7 +189,7 @@ for x_i in [0...5]
 		pieces.push piece
 
 pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
-pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
+# pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 
 for piece, i in pieces
 	piece.x += i * 2
@@ -228,15 +200,57 @@ shapes = []
 key_pieces = pieces.slice(pieces.length-3, pieces.length)
 
 shapes.push({
-	center: key_pieces[0].points[0]
+	# center: key_pieces[0].points[0]
+	a: key_pieces[0].points[0]
+	b: key_pieces[1].points[0]
 	draw: ->
-		#puz_ctx.moveTo
+		# puz_ctx.beginPath()
+		# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
+		# puz_ctx.fillStyle = "lime"
+		# puz_ctx.fill()
 		puz_ctx.beginPath()
-		puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 500, 0, TAU)
-		#puz_ctx.arc(0, 0, 500, 0, TAU)
-		puz_ctx.fillStyle = "red"
-		puz_ctx.fill()
+		puz_ctx.moveTo(@a.x + @a.piece.x, @a.y + @a.piece.y)
+		puz_ctx.lineTo(@b.x + @b.piece.x, @b.y + @b.piece.y)
+		puz_ctx.strokeStyle = "lime"
+		puz_ctx.lineCap = "round"
+		puz_ctx.lineWidth = 50
+		puz_ctx.stroke()
 })
+
+t = 20
+draw_puzzle = ->
+	t += 0.01
+	sunset = puz_ctx.createLinearGradient 0, 0, 0, puz_canvas.height
+	
+	sunset.addColorStop 0.000, 'rgb(0, 255, 242)'
+	sunset.addColorStop 0.442, 'rgb(107, 99, 255)'
+	sunset.addColorStop 0.836, 'rgb(255, 38, 38)'
+	sunset.addColorStop 0.934, 'rgb(255, 135, 22)'
+	sunset.addColorStop 1.000, 'rgb(255, 252, 0)'
+	
+	puz_ctx.fillStyle = sunset
+	puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
+	
+	puz_ctx.save()
+	# t = 20
+	puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
+	for i in [0..100]
+		puz_ctx.rotate(t / 56)
+		puz_ctx.fillRect(cos(t/6)*150*sin(i/60+t), 50, 15, cos(t/6+i) * 50)
+	puz_ctx.restore()
+	
+	puz_ctx.save()
+	tx = 200
+	puz_ctx.fillStyle = "yellow"
+	#puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
+	for i in [0..100]
+		puz_ctx.rotate(tx / 56)
+		puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
+	puz_ctx.restore()
+	
+	# for shape in shapes
+	# 	shape.draw()
+
 
 animate ->
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -244,7 +258,6 @@ animate ->
 	ctx.rect(puzzle_x, puzzle_y, puz_canvas.width, puz_canvas.height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
-	for shape in shapes
-		shape.draw()
+	draw_puzzle()
 	for piece in pieces
 		piece.draw()

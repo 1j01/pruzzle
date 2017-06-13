@@ -5,6 +5,8 @@ puzzle_x = 320
 puzzle_y = 160
 puz_canvas.width = 150 * 5
 puz_canvas.height = 150 * 5
+# TODO: render the puzzle on the pieces outside of the puzzle bounds
+# probably simplest to size puzzle canvas the same as the playing area
 
 pointers = {}
 
@@ -16,31 +18,36 @@ class Piece
 		@puz_y = 0
 		@puz_w = 150
 		@puz_h = 150
+		
+		@calcPath()
+		
 		@points =
 			for [0..4]
 				x: random() * @puz_w
 				y: random() * @puz_h
 				piece: @
+		
+		@is_key = false # "key pieces are sort of like the *key* to the puzzle"
+		# "... / level / pruzzle / pruzzle level"
+		@okay = false # whether on the grid and such
+		@locked = false # not allowed to move; applies to key pieces
 	
-	makePath: ->
-		ctx.beginPath()
-		#ctx.rect(@puz_x, @puz_y, @puz_w, @puz_h)
-		#ctx.rect(@puz_x, @puz_y, @puz_w-15, @puz_h-15)
-		#ctx.rect(@puz_x+15, @puz_y+15, @puz_w-15, @puz_h-15)
-		ctx.save()
-		ctx.translate(@puz_x, @puz_y)
-		ctx.moveTo(0, 0)
+	calcPath: ->
+		@path = new Path2D
+		# @path.rect(@puz_x, @puz_y, @puz_w, @puz_h)
+		# @path.rect(@puz_x, @puz_y, @puz_w-15, @puz_h-15)
+		# @path.rect(@puz_x+15, @puz_y+15, @puz_w-15, @puz_h-15)
+		@path.moveTo(0, 0)
 		r = @puz_w/5
-		ctx.arc(@puz_w/2, 0, r, -TAU/2, 0, true) if @puz_y > 0
-		ctx.lineTo(@puz_w, 0)
-		ctx.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, false) if @puz_x + @puz_w < puz_canvas.width
-		ctx.lineTo(@puz_w, @puz_h)
-		ctx.arc(@puz_w/2, @puz_h, r, 0, TAU/2, false) if @puz_y + @puz_h < puz_canvas.height
-		ctx.lineTo(0, @puz_h)
-		ctx.arc(0, @puz_h/2, r, TAU/4, -TAU/4, true) if @puz_x > 0
-		ctx.lineTo(0, 0)
-		ctx.closePath()
-		ctx.restore()
+		@path.arc(@puz_w/2, 0, r, -TAU/2, 0, true) if @puz_y > 0
+		@path.lineTo(@puz_w, 0)
+		@path.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, false) if @puz_x + @puz_w < puz_canvas.width
+		@path.lineTo(@puz_w, @puz_h)
+		@path.arc(@puz_w/2, @puz_h, r, 0, TAU/2, false) if @puz_y + @puz_h < puz_canvas.height
+		@path.lineTo(0, @puz_h)
+		@path.arc(0, @puz_h/2, r, TAU/4, -TAU/4, true) if @puz_x > 0
+		@path.lineTo(0, 0)
+		@path.closePath()
 	
 	draw: ->
 		held = false
@@ -53,10 +60,9 @@ class Piece
 		ctx.globalAlpha = 0.8 if held
 		
 		ctx.translate(@x, @y)
-		@makePath()
 		
 		ctx.save()
-		ctx.clip()
+		ctx.clip(@path)
 		
 		#ctx.fillStyle = "white"
 		#ctx.fill()
@@ -65,37 +71,29 @@ class Piece
 		#ctx.drawImage(puz_canvas, puzzle_x + @x, puzzle_y + @y)
 		#ctx.drawImage(puz_canvas, @x, @y)
 		#ctx.translate(-@puz_x, -@puz_y)
-		ctx.drawImage(puz_canvas, 0, 0)
+		ctx.drawImage(puz_canvas, -@puz_x, -@puz_y)
 		
 		#ctx.strokeStyle = if @hover then "yellow" else "white"
 		#ctx.strokeStyle = if held then "lime" else if @hover then "yellow" else "white"
 		#ctx.strokeStyle = "white"
 		if hovered
 			ctx.strokeStyle = "yellow"
+			ctx.strokeStyle = "lime" if @is_key
 			ctx.lineWidth = 6
-			ctx.stroke()
+			ctx.stroke(@path)
 		
-		# XXX: pillow shading
-		#ctx.strokeStyle = "white"
-		#ctx.lineWidth = 4
-		#ctx.stroke()
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"
+		ctx.lineWidth = 2
+		ctx.translate(0, 1)
+		ctx.stroke(@path)
+		ctx.translate(0, -1)
 		
-		ctx.shadowColor = "rgba(255, 255, 255, 0.6)"
-		ctx.shadowOffsetX = 0
-		ctx.shadowOffsetY = 1.5
-		
-		#ctx.strokeStyle = if hovered then "yellow" else "black"
 		ctx.strokeStyle = "black"
 		ctx.lineWidth = 2
-		ctx.stroke()
+		ctx.stroke(@path)
 		
 		ctx.restore()
 		ctx.restore()
-		
-		#ctx.strokeStyle = "rgba(0,0,0,0.5)"
-		#ctx.lineWidth = 1
-		#ctx.stroke()
-		
 
 class Grid
 	constructor: ->
@@ -116,9 +114,8 @@ canvas.setAttribute "touch-action", "none"
 
 canvas.addEventListener "mousemove", (e)->
 	{x, y} = toCanvasPosition(e)
-	for piece in pieces
-		piece.makePath()
-		if ctx.isPointInPath(x - piece.x, y - piece.y)
+	for piece in pieces when not piece.locked
+		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
 			#break
 	for piece in pieces
@@ -128,9 +125,8 @@ canvas.addEventListener "mousemove", (e)->
 canvas.addEventListener "pointerdown", (e)->
 	#undoable()
 	{x, y} = toCanvasPosition(e)
-	for piece in pieces
-		piece.makePath()
-		if ctx.isPointInPath(x - piece.x, y - piece.y)
+	for piece in pieces when not piece.locked
+		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
 			#break
 	
@@ -151,8 +147,8 @@ canvas.addEventListener "pointermove", (e)->
 	if pointer
 		pointer.x = x
 		pointer.y = y
-		if pointer.drag_piece
-			piece = pointer.drag_piece
+		piece = pointer.drag_piece
+		if piece
 			piece.x = x + pointer.offset_x
 			piece.y = y + pointer.offset_y
 			
@@ -161,65 +157,137 @@ canvas.addEventListener "pointermove", (e)->
 			
 			d = 20
 			if (
-				abs(pointer.drag_piece.x - align_x) < d and
-				abs(pointer.drag_piece.y - align_y) < d
+				abs(piece.x - align_x) < d and
+				abs(piece.y - align_y) < d
 			)
-				pointer.drag_piece.x = align_x
-				pointer.drag_piece.y = align_y
+				piece.x = align_x
+				piece.y = align_y
+				# TODO: check geometric plausibility
+				# - within the puzzle bounds
+				# - not intersecting any placed pieces
+				# - edge/corner pieces against sides
+				# (although maybe it should let you eject pieces in some cases)
+				piece.okay = true
+			else
+				piece.okay = false
 			
+			if piece.is_key
+				piece.puz_x = piece.x - puzzle_x
+				piece.puz_y = piece.y - puzzle_y
+
+maybe_reveal_next_piece = (current_piece)->
+	if current_piece?.okay
+		if current_piece.is_key
+			current_piece.locked = true
+		reveal_next_piece()
 
 canvas.addEventListener "pointerup", (e)->
+	maybe_reveal_next_piece(pointers[e.pointerId].drag_piece)
 	delete pointers[e.pointerId]
 
 canvas.addEventListener "pointercancel", (e)->
-	# NOTE: maybe ought to revert to original position of piece
+	# NOTE: maybe ought to revert to original position of piece instead
+	maybe_reveal_next_piece(pointers[e.pointerId].drag_piece)
 	delete pointers[e.pointerId]
+
+# grid = new Grid
 
 
 pieces = []
-grid = new Grid
+# active_pieces = []
+next_pieces = []
+# TODO: define next pieces based on the current pieces
+# so that the next pieces don't overlap with the occupied space
 
 for x_i in [0...5]
 	for y_i in [0...5]
 		piece = new Piece
 		piece.puz_x = x_i * 150
 		piece.puz_y = y_i * 150
-		piece.x = -x_i * 150 + 10
-		piece.y = -y_i * 150 + 10
-		pieces.push piece
+		# piece.x = -x_i * 150 + 10
+		# piece.y = -y_i * 150 + 10
+		piece.calcPath()
+		# pieces.push piece
+		next_pieces.push piece
 
-pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
-# pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
+next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
+# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 
-for piece, i in pieces
-	piece.x += i * 2
-	piece.y += i * 1
+# for piece, i in pieces
+# 	piece.x += i * 2
+# 	piece.y += i * 1
 
 shapes = []
 
-key_pieces = pieces.slice(pieces.length-3, pieces.length)
+# key_pieces = pieces.slice(pieces.length-3, pieces.length)
+key_pieces = next_pieces.slice(0, 3)
+for key in key_pieces
+	key.is_key = true
+
+do reveal_next_piece = ->
+	next_piece = next_pieces.shift()
+	if next_piece
+		pieces.push(next_piece)
+
+# class Shape
+# 	constructor: ->
+# 		
+# 	getPoint: ->
+
+getPoint = (point)->
+	# x: point.x + point.piece.x - point.piece.puz_x
+	# y: point.y + point.piece.y - point.piece.puz_y
+	return unless point.piece in pieces
+	x: point.x + point.piece.puz_x
+	y: point.y + point.piece.puz_y
 
 shapes.push({
 	# center: key_pieces[0].points[0]
-	a: key_pieces[0].points[0]
-	b: key_pieces[1].points[0]
+	a: key_pieces[1].points[0]
+	b: key_pieces[2].points[0]
 	draw: ->
+		a = getPoint(@a)
+		b = getPoint(@b)
+		return unless a and b
 		# puz_ctx.beginPath()
 		# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
 		# puz_ctx.fillStyle = "lime"
 		# puz_ctx.fill()
 		puz_ctx.beginPath()
-		puz_ctx.moveTo(@a.x + @a.piece.x, @a.y + @a.piece.y)
-		puz_ctx.lineTo(@b.x + @b.piece.x, @b.y + @b.piece.y)
+		puz_ctx.moveTo(a.x, a.y)
+		puz_ctx.lineTo(b.x, b.y)
 		puz_ctx.strokeStyle = "lime"
 		puz_ctx.lineCap = "round"
 		puz_ctx.lineWidth = 50
 		puz_ctx.stroke()
 })
 
+shapes.push({
+	center: key_pieces[0].points[0]
+	# a: key_pieces[0].points[0]
+	# b: key_pieces[1].points[0]
+	draw: ->
+		center = getPoint(@center)
+		return unless center
+		puz_ctx.save()
+		tx = 200
+		puz_ctx.fillStyle = "yellow"
+		puz_ctx.translate(center.x, center.y)
+		for i in [0..100]
+			puz_ctx.rotate(tx / 56)
+			puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
+		puz_ctx.restore()
+		
+})
+
 t = 20
 draw_puzzle = ->
 	t += 0.01
+	
+	puz_ctx.fillStyle = "#1178ff"
+	puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
+	
+	###
 	sunset = puz_ctx.createLinearGradient 0, 0, 0, puz_canvas.height
 	
 	sunset.addColorStop 0.000, 'rgb(0, 255, 242)'
@@ -247,9 +315,10 @@ draw_puzzle = ->
 		puz_ctx.rotate(tx / 56)
 		puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
 	puz_ctx.restore()
+	###
 	
-	# for shape in shapes
-	# 	shape.draw()
+	for shape in shapes
+		shape.draw()
 
 
 animate ->
@@ -261,3 +330,4 @@ animate ->
 	draw_puzzle()
 	for piece in pieces
 		piece.draw()
+	return

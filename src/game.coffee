@@ -17,6 +17,13 @@ class Piece
 		@puz_w = 150
 		@puz_h = 150
 		
+		@sides = [
+			{type: "edge"}
+			{type: "edge"}
+			{type: "edge"}
+			{type: "edge"}
+		]
+		
 		@calcPath()
 		
 		@points =
@@ -34,13 +41,17 @@ class Piece
 		# @path.rect(0, 0, @puz_w, @puz_h)
 		@path.moveTo(0, 0)
 		r = @puz_w/5
-		@path.arc(@puz_w/2, 0, r, -TAU/2, 0, true) if @puz_y > 0
+		if @sides[0].type isnt "edge"
+			@path.arc(@puz_w/2, 0, r, -TAU/2, 0, @sides[0].type is "innie")
 		@path.lineTo(@puz_w, 0)
-		@path.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, false) if @puz_x + @puz_w < puzzle_width
+		if @sides[1].type isnt "edge"
+			@path.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, @sides[1].type is "innie")
 		@path.lineTo(@puz_w, @puz_h)
-		@path.arc(@puz_w/2, @puz_h, r, 0, TAU/2, false) if @puz_y + @puz_h < puzzle_height
+		if @sides[2].type isnt "edge"
+			@path.arc(@puz_w/2, @puz_h, r, 0, TAU/2, @sides[2].type is "innie")
 		@path.lineTo(0, @puz_h)
-		@path.arc(0, @puz_h/2, r, TAU/4, -TAU/4, true) if @puz_x > 0
+		if @sides[3].type isnt "edge"
+			@path.arc(0, @puz_h/2, r, TAU/4, -TAU/4, @sides[3].type is "innie")
 		@path.lineTo(0, 0)
 		@path.closePath()
 	
@@ -206,6 +217,10 @@ do update_next_pieces = ->
 				# piece.y = (puzzle_y - piece.puz_h) / 2
 				# piece.y = puzzle_y
 				piece.y = puzzle_y + (puzzle_height - piece.puz_h) / 2
+				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
+				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle_width then "outie" else "edge"
+				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle_height then "outie" else "edge"
+				piece.sides[3].type = if piece.puz_x > 0 then "innie" else "edge"
 				piece.calcPath()
 				piece.is_key = pieces.length < 3
 				next_pieces.push piece

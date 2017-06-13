@@ -97,10 +97,14 @@ class Piece
 
 class Grid
 	constructor: ->
-		
+		@rows = []
 	
-	get: ->
-		
+	get: (x, y)->
+		@rows[y]?[x]
+	
+	set: (x, y, val)->
+		@rows[y] ?= []
+		@rows[y][x] = val
 
 toCanvasPosition = (evt)->
 	rect = canvas.getBoundingClientRect()  # absolute position and size of element
@@ -152,8 +156,10 @@ canvas.addEventListener "pointermove", (e)->
 			piece.x = x + pointer.offset_x
 			piece.y = y + pointer.offset_y
 			
-			align_x = Math.round((piece.x - puzzle_x) / 150) * 150 + puzzle_x
-			align_y = Math.round((piece.y - puzzle_y) / 150) * 150 + puzzle_y
+			grid_x = Math.round((piece.x - puzzle_x) / 150)
+			grid_y = Math.round((piece.y - puzzle_y) / 150)
+			align_x = grid_x * 150 + puzzle_x
+			align_y = grid_y * 150 + puzzle_y
 			
 			d = 20
 			if (
@@ -162,6 +168,8 @@ canvas.addEventListener "pointermove", (e)->
 			)
 				piece.x = align_x
 				piece.y = align_y
+				piece.grid_x = grid_x
+				piece.grid_y = grid_y
 				# TODO: check geometric plausibility
 				# - within the puzzle bounds
 				# - not intersecting any placed pieces
@@ -175,43 +183,47 @@ canvas.addEventListener "pointermove", (e)->
 				piece.puz_x = piece.x - puzzle_x
 				piece.puz_y = piece.y - puzzle_y
 
-maybe_reveal_next_piece = (current_piece)->
+drop_piece_and_maybe_reveal_next = (current_piece)->
 	if current_piece?.okay
+		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key
 			current_piece.locked = true
+			update_next_pieces()
 		reveal_next_piece()
 
 canvas.addEventListener "pointerup", (e)->
-	maybe_reveal_next_piece(pointers[e.pointerId].drag_piece)
+	drop_piece_and_maybe_reveal_next(pointers[e.pointerId].drag_piece)
 	delete pointers[e.pointerId]
 
 canvas.addEventListener "pointercancel", (e)->
 	# NOTE: maybe ought to revert to original position of piece instead
-	maybe_reveal_next_piece(pointers[e.pointerId].drag_piece)
+	drop_piece_and_maybe_reveal_next(pointers[e.pointerId].drag_piece)
 	delete pointers[e.pointerId]
 
-# grid = new Grid
 
+grid = new Grid
 
-pieces = []
-# active_pieces = []
-next_pieces = []
-# TODO: define next pieces based on the current pieces
-# so that the next pieces don't overlap with the occupied space
+pieces = [] # "in play"
+next_pieces = [] # "out of play"
+key_pieces = []
 
-for x_i in [0...5]
-	for y_i in [0...5]
-		piece = new Piece
-		piece.puz_x = x_i * 150
-		piece.puz_y = y_i * 150
-		# piece.x = -x_i * 150 + 10
-		# piece.y = -y_i * 150 + 10
-		piece.calcPath()
-		# pieces.push piece
-		next_pieces.push piece
-
-next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
-# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
+do update_next_pieces = ->
+	next_pieces = []
+	for x_i in [0...5]
+		for y_i in [0...5]
+			unless grid.get(x_i, y_i)
+				piece = new Piece
+				piece.puz_x = x_i * 150
+				piece.puz_y = y_i * 150
+				# piece.x = -x_i * 150 + 10
+				# piece.y = -y_i * 150 + 10
+				piece.calcPath()
+				# pieces.push piece
+				piece.is_key = pieces.length < 3
+				next_pieces.push piece
+	
+	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
+	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 
 # for piece, i in pieces
 # 	piece.x += i * 2
@@ -220,14 +232,16 @@ next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
 shapes = []
 
 # key_pieces = pieces.slice(pieces.length-3, pieces.length)
-key_pieces = next_pieces.slice(0, 3)
-for key in key_pieces
-	key.is_key = true
+# key_pieces = next_pieces.slice(0, 3)
+# for key in key_pieces
+# 	key.is_key = true
 
 do reveal_next_piece = ->
 	next_piece = next_pieces.shift()
 	if next_piece
 		pieces.push(next_piece)
+		if next_piece.is_key
+			key_pieces.push(next_piece)
 
 # class Shape
 # 	constructor: ->
@@ -237,17 +251,18 @@ do reveal_next_piece = ->
 getPoint = (point)->
 	# x: point.x + point.piece.x - point.piece.puz_x
 	# y: point.y + point.piece.y - point.piece.puz_y
+	return unless point
 	return unless point.piece in pieces
 	x: point.x + point.piece.puz_x
 	y: point.y + point.piece.puz_y
 
 shapes.push({
 	# center: key_pieces[0].points[0]
-	a: key_pieces[1].points[0]
-	b: key_pieces[2].points[0]
+	# a: key_pieces[1].points[0]
+	# b: key_pieces[2].points[0]
 	draw: ->
-		a = getPoint(@a)
-		b = getPoint(@b)
+		a = getPoint(key_pieces[1]?.points[0])
+		b = getPoint(key_pieces[2]?.points[0])
 		return unless a and b
 		# puz_ctx.beginPath()
 		# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
@@ -263,11 +278,9 @@ shapes.push({
 })
 
 shapes.push({
-	center: key_pieces[0].points[0]
-	# a: key_pieces[0].points[0]
-	# b: key_pieces[1].points[0]
+	# center: key_pieces[0].points[0]
 	draw: ->
-		center = getPoint(@center)
+		center = getPoint(key_pieces[0]?.points[0])
 		return unless center
 		puz_ctx.save()
 		tx = 200

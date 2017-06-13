@@ -3,10 +3,8 @@ puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
 puzzle_x = 320
 puzzle_y = 160
-puz_canvas.width = 150 * 5
-puz_canvas.height = 150 * 5
-# TODO: render the puzzle on the pieces outside of the puzzle bounds
-# probably simplest to size puzzle canvas the same as the playing area
+puzzle_width = 150 * 5
+puzzle_height = 150 * 5
 
 pointers = {}
 
@@ -41,9 +39,9 @@ class Piece
 		r = @puz_w/5
 		@path.arc(@puz_w/2, 0, r, -TAU/2, 0, true) if @puz_y > 0
 		@path.lineTo(@puz_w, 0)
-		@path.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, false) if @puz_x + @puz_w < puz_canvas.width
+		@path.arc(@puz_w, @puz_h/2, r, -TAU/4, TAU/4, false) if @puz_x + @puz_w < puzzle_width
 		@path.lineTo(@puz_w, @puz_h)
-		@path.arc(@puz_w/2, @puz_h, r, 0, TAU/2, false) if @puz_y + @puz_h < puz_canvas.height
+		@path.arc(@puz_w/2, @puz_h, r, 0, TAU/2, false) if @puz_y + @puz_h < puzzle_height
 		@path.lineTo(0, @puz_h)
 		@path.arc(0, @puz_h/2, r, TAU/4, -TAU/4, true) if @puz_x > 0
 		@path.lineTo(0, 0)
@@ -70,8 +68,11 @@ class Piece
 		#ctx.translate(-@x, -@y)
 		#ctx.drawImage(puz_canvas, puzzle_x + @x, puzzle_y + @y)
 		#ctx.drawImage(puz_canvas, @x, @y)
-		#ctx.translate(-@puz_x, -@puz_y)
-		ctx.drawImage(puz_canvas, -@puz_x, -@puz_y)
+		# ctx.translate(-@puz_x, -@puz_y)
+		# ctx.drawImage(puz_canvas, puzzle_x, puzzle_y)
+		# ctx.drawImage(puz_canvas, 0, 0)
+		# ctx.drawImage(puz_canvas, -@puz_x, -@puz_y)
+		ctx.drawImage(puz_canvas, -puzzle_x-@puz_x, -puzzle_y-@puz_y)
 		
 		#ctx.strokeStyle = if @hover then "yellow" else "white"
 		#ctx.strokeStyle = if held then "lime" else if @hover then "yellow" else "white"
@@ -215,10 +216,7 @@ do update_next_pieces = ->
 				piece = new Piece
 				piece.puz_x = x_i * 150
 				piece.puz_y = y_i * 150
-				# piece.x = -x_i * 150 + 10
-				# piece.y = -y_i * 150 + 10
 				piece.calcPath()
-				# pieces.push piece
 				piece.is_key = pieces.length < 3
 				next_pieces.push piece
 	
@@ -231,11 +229,6 @@ do update_next_pieces = ->
 
 shapes = []
 
-# key_pieces = pieces.slice(pieces.length-3, pieces.length)
-# key_pieces = next_pieces.slice(0, 3)
-# for key in key_pieces
-# 	key.is_key = true
-
 do reveal_next_piece = ->
 	next_piece = next_pieces.shift()
 	if next_piece
@@ -243,24 +236,18 @@ do reveal_next_piece = ->
 		if next_piece.is_key
 			key_pieces.push(next_piece)
 
-# class Shape
-# 	constructor: ->
-# 		
-# 	getPoint: ->
-
 getPoint = (point)->
-	# x: point.x + point.piece.x - point.piece.puz_x
-	# y: point.y + point.piece.y - point.piece.puz_y
 	return unless point
 	return unless point.piece in pieces
 	x: point.x + point.piece.puz_x
 	y: point.y + point.piece.puz_y
 
 shapes.push({
-	# center: key_pieces[0].points[0]
-	# a: key_pieces[1].points[0]
-	# b: key_pieces[2].points[0]
 	draw: ->
+		# NOTE: this is an "invalid" shape
+		# it shows up on the second key only once the third is revealed
+		# and you can change it directly as you move the third key
+		# it can even show up on the first key
 		a = getPoint(key_pieces[1]?.points[0])
 		b = getPoint(key_pieces[2]?.points[0])
 		return unless a and b
@@ -330,16 +317,23 @@ draw_puzzle = ->
 	puz_ctx.restore()
 	###
 	
+	puz_ctx.save()
+	puz_ctx.translate(puzzle_x, puzzle_y)
+	
 	for shape in shapes
 		shape.draw()
+	
+	puz_ctx.restore()
 
 
 animate ->
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.beginPath()
-	ctx.rect(puzzle_x, puzzle_y, puz_canvas.width, puz_canvas.height)
+	ctx.rect(puzzle_x, puzzle_y, puzzle_width, puzzle_height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
+	puz_canvas.width = canvas.width
+	puz_canvas.height = canvas.height
 	draw_puzzle()
 	for piece in pieces
 		piece.draw()

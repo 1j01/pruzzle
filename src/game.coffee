@@ -1,8 +1,8 @@
 
 puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
-puzzle_x = 300
-puzzle_y = 70
+@puzzle_x = 300
+@puzzle_y = 70
 
 pointers = {}
 
@@ -189,12 +189,12 @@ drop_piece_and_maybe_reveal_next = (current_piece)->
 		reveal_next_piece()
 
 canvas.addEventListener "pointerup", (e)->
-	drop_piece_and_maybe_reveal_next(pointers[e.pointerId].drag_piece)
+	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
 canvas.addEventListener "pointercancel", (e)->
 	# NOTE: maybe ought to revert to original position of piece instead
-	drop_piece_and_maybe_reveal_next(pointers[e.pointerId].drag_piece)
+	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
 
@@ -252,43 +252,25 @@ reveal_next_piece = ->
 			key_pieces.push(next_piece)
 		next_piece.moved()
 
-start_puzzle(puzzles[0])
+do update_from_hash = ->
+	lvl_n = parseInt(location.hash.replace("#", ""))
+	if puzzles[lvl_n]
+		start_puzzle(puzzles[lvl_n])
+	else
+		start_puzzle(puzzles[0])
+
+addEventListener "hashchange", update_from_hash
+
 
 t = 20
 draw_puzzle = ->
 	t += 0.01
 	
-	puz_ctx.fillStyle = puzzle.background
-	puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
-	
-	###
-	sunset = puz_ctx.createLinearGradient 0, 0, 0, puz_canvas.height
-	
-	sunset.addColorStop 0.000, 'rgb(0, 255, 242)'
-	sunset.addColorStop 0.442, 'rgb(107, 99, 255)'
-	sunset.addColorStop 0.836, 'rgb(255, 38, 38)'
-	sunset.addColorStop 0.934, 'rgb(255, 135, 22)'
-	sunset.addColorStop 1.000, 'rgb(255, 252, 0)'
-	
-	puz_ctx.fillStyle = sunset
-	puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
-	
-	puz_ctx.save()
-	# t = 20
-	puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
-	for i in [0..100]
-		puz_ctx.rotate(t / 56)
-		puz_ctx.fillRect(cos(t/6)*150*sin(i/60+t), 50, 15, cos(t/6+i) * 50)
-	puz_ctx.restore()
-	
-	puz_ctx.save()
-	tx = 200
-	puz_ctx.fillStyle = "yellow"
-	for i in [0..100]
-		puz_ctx.rotate(tx / 56)
-		puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
-	puz_ctx.restore()
-	###
+	if typeof puzzle.background is "function"
+		puzzle.background(puz_ctx)
+	else
+		puz_ctx.fillStyle = puzzle.background
+		puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
 	
 	puz_ctx.save()
 	puz_ctx.translate(puzzle_x, puzzle_y)

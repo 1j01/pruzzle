@@ -25,16 +25,13 @@ class Piece
 				y: random() * @puz_h
 				piece: @
 		
+		@okay = false # placed in a valid position
 		@is_key = false # "key pieces are sort of like the *key* to the puzzle"
-		# "... / level / pruzzle / pruzzle level"
-		@okay = false # whether on the grid and such
-		@locked = false # not allowed to move; applies to key pieces
+		@locked_in = false # not allowed to move; applies to key pieces
 	
 	calcPath: ->
 		@path = new Path2D
-		# @path.rect(@puz_x, @puz_y, @puz_w, @puz_h)
-		# @path.rect(@puz_x, @puz_y, @puz_w-15, @puz_h-15)
-		# @path.rect(@puz_x+15, @puz_y+15, @puz_w-15, @puz_h-15)
+		# @path.rect(0, 0, @puz_w, @puz_h)
 		@path.moveTo(0, 0)
 		r = @puz_w/5
 		@path.arc(@puz_w/2, 0, r, -TAU/2, 0, true) if @puz_y > 0
@@ -62,21 +59,8 @@ class Piece
 		ctx.save()
 		ctx.clip(@path)
 		
-		#ctx.fillStyle = "white"
-		#ctx.fill()
-		#ctx.drawImage(puz_canvas, puzzle_x - @x, puzzle_y - @y)
-		#ctx.translate(-@x, -@y)
-		#ctx.drawImage(puz_canvas, puzzle_x + @x, puzzle_y + @y)
-		#ctx.drawImage(puz_canvas, @x, @y)
-		# ctx.translate(-@puz_x, -@puz_y)
-		# ctx.drawImage(puz_canvas, puzzle_x, puzzle_y)
-		# ctx.drawImage(puz_canvas, 0, 0)
-		# ctx.drawImage(puz_canvas, -@puz_x, -@puz_y)
 		ctx.drawImage(puz_canvas, -puzzle_x-@puz_x, -puzzle_y-@puz_y)
 		
-		#ctx.strokeStyle = if @hover then "yellow" else "white"
-		#ctx.strokeStyle = if held then "lime" else if @hover then "yellow" else "white"
-		#ctx.strokeStyle = "white"
 		if hovered
 			ctx.strokeStyle = "yellow"
 			ctx.strokeStyle = "lime" if @is_key
@@ -107,10 +91,10 @@ class Grid
 		@rows[y] ?= []
 		@rows[y][x] = val
 
-toCanvasPosition = (evt)->
+to_canvas_position = (evt)->
 	rect = canvas.getBoundingClientRect()  # absolute position and size of element
-	scaleX = canvas.width / rect.width     # relationship bitmap vs. element for X
-	scaleY = canvas.height / rect.height   # relationship bitmap vs. element for Y
+	scaleX = canvas.width / rect.width     # ratio of bitmap to element width
+	scaleY = canvas.height / rect.height   # ratio of bitmap to element height
 	
 	x: (evt.clientX - rect.left) * scaleX  # scale mouse coordinates after they have
 	y: (evt.clientY - rect.top) * scaleY   # been adjusted to be relative to element
@@ -118,22 +102,20 @@ toCanvasPosition = (evt)->
 canvas.setAttribute "touch-action", "none"
 
 canvas.addEventListener "mousemove", (e)->
-	{x, y} = toCanvasPosition(e)
-	for piece in pieces when not piece.locked
+	{x, y} = to_canvas_position(e)
+	for piece in pieces when not piece.locked_in
 		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
-			#break
 	for piece in pieces
 		piece.hover = piece is drag_piece
 	canvas.style.cursor = if drag_piece then "move" else "default"
 
 canvas.addEventListener "pointerdown", (e)->
-	#undoable()
-	{x, y} = toCanvasPosition(e)
-	for piece in pieces when not piece.locked
+	# TODO: maybe undoable()
+	{x, y} = to_canvas_position(e)
+	for piece in pieces when not piece.locked_in
 		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
-			#break
 	
 	if drag_piece
 		pieces.splice(pieces.indexOf(drag_piece), 1)
@@ -147,7 +129,7 @@ canvas.addEventListener "pointerdown", (e)->
 		offset_y: drag_piece?.y - y
 
 canvas.addEventListener "pointermove", (e)->
-	{x, y} = toCanvasPosition(e)
+	{x, y} = to_canvas_position(e)
 	pointer = pointers[e.pointerId]
 	if pointer
 		pointer.x = x
@@ -162,6 +144,12 @@ canvas.addEventListener "pointermove", (e)->
 			align_x = grid_x * 150 + puzzle_x
 			align_y = grid_y * 150 + puzzle_y
 			
+			# TODO: check geometric plausibility before snapping
+			# - piece's bounds within the puzzle bounds
+			# - piece doesn't intersect placed pieces*
+			# - edge sides against puzzle sides
+			# - non-edge sides not against puzzle sides
+			# (*although maybe it should let you eject pieces in some cases)
 			d = 20
 			if (
 				abs(piece.x - align_x) < d and
@@ -171,11 +159,6 @@ canvas.addEventListener "pointermove", (e)->
 				piece.y = align_y
 				piece.grid_x = grid_x
 				piece.grid_y = grid_y
-				# TODO: check geometric plausibility
-				# - within the puzzle bounds
-				# - not intersecting any placed pieces
-				# - edge/corner pieces against sides
-				# (although maybe it should let you eject pieces in some cases)
 				piece.okay = true
 			else
 				piece.okay = false
@@ -188,7 +171,7 @@ drop_piece_and_maybe_reveal_next = (current_piece)->
 	if current_piece?.okay
 		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key
-			current_piece.locked = true
+			current_piece.locked_in = true
 			update_next_pieces()
 		reveal_next_piece()
 
@@ -223,10 +206,6 @@ do update_next_pieces = ->
 	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
 	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 
-# for piece, i in pieces
-# 	piece.x += i * 2
-# 	piece.y += i * 1
-
 shapes = []
 
 do reveal_next_piece = ->
@@ -236,7 +215,7 @@ do reveal_next_piece = ->
 		if next_piece.is_key
 			key_pieces.push(next_piece)
 
-getPoint = (point)->
+get_point = (point)->
 	return unless point
 	return unless point.piece in pieces
 	x: point.x + point.piece.puz_x
@@ -248,8 +227,8 @@ shapes.push({
 		# it shows up on the second key only once the third is revealed
 		# and you can change it directly as you move the third key
 		# it can even show up on the first key
-		a = getPoint(key_pieces[1]?.points[0])
-		b = getPoint(key_pieces[2]?.points[0])
+		a = get_point(key_pieces[1]?.points[0])
+		b = get_point(key_pieces[2]?.points[0])
 		return unless a and b
 		# puz_ctx.beginPath()
 		# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
@@ -265,9 +244,8 @@ shapes.push({
 })
 
 shapes.push({
-	# center: key_pieces[0].points[0]
 	draw: ->
-		center = getPoint(key_pieces[0]?.points[0])
+		center = get_point(key_pieces[0]?.points[0])
 		return unless center
 		puz_ctx.save()
 		tx = 200
@@ -310,7 +288,6 @@ draw_puzzle = ->
 	puz_ctx.save()
 	tx = 200
 	puz_ctx.fillStyle = "yellow"
-	#puz_ctx.translate(puz_canvas.width / 2, puz_canvas.height / 2)
 	for i in [0..100]
 		puz_ctx.rotate(tx / 56)
 		puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)

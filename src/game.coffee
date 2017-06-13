@@ -44,6 +44,11 @@ class Piece
 		@path.lineTo(0, 0)
 		@path.closePath()
 	
+	moved: ->
+		if @is_key
+			@puz_x = @x - puzzle_x
+			@puz_y = @y - puzzle_y
+	
 	draw: ->
 		held = false
 		for pointerId, pointer of pointers
@@ -163,9 +168,7 @@ canvas.addEventListener "pointermove", (e)->
 			else
 				piece.okay = false
 			
-			if piece.is_key
-				piece.puz_x = piece.x - puzzle_x
-				piece.puz_y = piece.y - puzzle_y
+			piece.moved()
 
 drop_piece_and_maybe_reveal_next = (current_piece)->
 	if current_piece?.okay
@@ -218,6 +221,7 @@ do reveal_next_piece = ->
 		pieces.push(next_piece)
 		if next_piece.is_key
 			key_pieces.push(next_piece)
+		next_piece.moved()
 
 get_point = (point)->
 	return unless point

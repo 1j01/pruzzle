@@ -3,8 +3,6 @@ puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
 puzzle_x = 300
 puzzle_y = 70
-puzzle_width = 150 * 5
-puzzle_height = 150 * 5
 
 pointers = {}
 
@@ -61,6 +59,7 @@ class Piece
 			@puz_y = @y - puzzle_y
 	
 	draw: ->
+		# TODO: refactor (pieces shouldn't have to know about pointers)
 		held = false
 		for pointerId, pointer of pointers
 			if pointer.drag_piece is @
@@ -205,7 +204,7 @@ pieces = [] # "in play"
 next_pieces = [] # "out of play"
 key_pieces = []
 
-do update_next_pieces = ->
+update_next_pieces = ->
 	next_pieces = []
 	for x_i in [0...5]
 		for y_i in [0...5]
@@ -216,21 +215,36 @@ do update_next_pieces = ->
 				piece.x = (puzzle_x - piece.puz_w) / 2
 				# piece.y = (puzzle_y - piece.puz_h) / 2
 				# piece.y = puzzle_y
-				piece.y = puzzle_y + (puzzle_height - piece.puz_h) / 2
+				piece.y = puzzle_y + (puzzle.height - piece.puz_h) / 2
 				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
-				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle_width then "outie" else "edge"
-				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle_height then "outie" else "edge"
+				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle.width then "outie" else "edge"
+				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle.height then "outie" else "edge"
 				piece.sides[3].type = if piece.puz_x > 0 then "innie" else "edge"
 				piece.calcPath()
-				piece.is_key = pieces.length < 3
+				piece.is_key = pieces.length < puzzle.n_keys
 				next_pieces.push piece
 	
 	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
 	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 
-shapes = []
+puzzle = null
 
-do reveal_next_piece = ->
+start_puzzle = (_puzzle)->
+	puzzle = _puzzle
+	
+	# reset grid, pieces, next_pieces, key_pieces
+	# maybe canvases, etc.
+	
+	grid = new Grid
+	
+	pieces = [] # "in play"
+	next_pieces = [] # "out of play"
+	key_pieces = []
+	
+	update_next_pieces()
+	reveal_next_piece()
+
+reveal_next_piece = ->
 	next_piece = next_pieces.shift()
 	if next_piece
 		pieces.push(next_piece)
@@ -238,54 +252,13 @@ do reveal_next_piece = ->
 			key_pieces.push(next_piece)
 		next_piece.moved()
 
-get_point = (point)->
-	return unless point
-	return unless point.piece in pieces
-	x: point.x + point.piece.puz_x
-	y: point.y + point.piece.puz_y
-
-shapes.push({
-	draw: ->
-		# NOTE: this is an "invalid" shape
-		# it shows up on the second key only once the third is revealed
-		# and you can change it directly as you move the third key
-		# it can even show up on the first key
-		a = get_point(key_pieces[1]?.points[0])
-		b = get_point(key_pieces[2]?.points[0])
-		return unless a and b
-		# puz_ctx.beginPath()
-		# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
-		# puz_ctx.fillStyle = "lime"
-		# puz_ctx.fill()
-		puz_ctx.beginPath()
-		puz_ctx.moveTo(a.x, a.y)
-		puz_ctx.lineTo(b.x, b.y)
-		puz_ctx.strokeStyle = "lime"
-		puz_ctx.lineCap = "round"
-		puz_ctx.lineWidth = 50
-		puz_ctx.stroke()
-})
-
-shapes.push({
-	draw: ->
-		center = get_point(key_pieces[0]?.points[0])
-		return unless center
-		puz_ctx.save()
-		tx = 200
-		puz_ctx.fillStyle = "yellow"
-		puz_ctx.translate(center.x, center.y)
-		for i in [0..100]
-			puz_ctx.rotate(tx / 56)
-			puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
-		puz_ctx.restore()
-		
-})
+start_puzzle(puzzles[0])
 
 t = 20
 draw_puzzle = ->
 	t += 0.01
 	
-	puz_ctx.fillStyle = "#1178ff"
+	puz_ctx.fillStyle = puzzle.background
 	puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
 	
 	###
@@ -320,8 +293,8 @@ draw_puzzle = ->
 	puz_ctx.save()
 	puz_ctx.translate(puzzle_x, puzzle_y)
 	
-	for shape in shapes
-		shape.draw()
+	for shape in puzzle.shapes
+		shape.draw(puz_ctx, key_pieces)
 	
 	puz_ctx.restore()
 
@@ -329,7 +302,7 @@ draw_puzzle = ->
 animate ->
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.beginPath()
-	ctx.rect(puzzle_x, puzzle_y, puzzle_width, puzzle_height)
+	ctx.rect(puzzle_x, puzzle_y, puzzle.width, puzzle.height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
 	puz_canvas.width = canvas.width

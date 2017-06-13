@@ -1,8 +1,8 @@
 
 puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
-puzzle_x = 320
-puzzle_y = 160
+puzzle_x = 300
+puzzle_y = 70
 puzzle_width = 150 * 5
 puzzle_height = 150 * 5
 
@@ -10,8 +10,8 @@ pointers = {}
 
 class Piece
 	constructor: ->
-		@x = 10
-		@y = 10
+		@x = 0
+		@y = 0
 		@puz_x = 0
 		@puz_y = 0
 		@puz_w = 150
@@ -199,6 +199,10 @@ do update_next_pieces = ->
 				piece = new Piece
 				piece.puz_x = x_i * 150
 				piece.puz_y = y_i * 150
+				piece.x = (puzzle_x - piece.puz_w) / 2
+				# piece.y = (puzzle_y - piece.puz_h) / 2
+				# piece.y = puzzle_y
+				piece.y = puzzle_y + (puzzle_height - piece.puz_h) / 2
 				piece.calcPath()
 				piece.is_key = pieces.length < 3
 				next_pieces.push piece

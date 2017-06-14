@@ -142,14 +142,68 @@ get_point = (point)->
 		n_keys: 5
 		
 		# grid: new Grid
-		# update: ->
+		maze_rows:
+			for [0..5]
+				for [0..5]
+					left_open: no
+					right_open: no
+					top_open: no
+					bottom_open: no
+		update: ->
 			# generate maze
+			
 		
 		draw: (puz_ctx, key_pieces)->
 			
+			# the "level" grid shouldn't necessarily have to be the same size as the jigsaw grid, but it would be more complicated
+			grid_size = 150
+			inset = 20
+			border = 2
+			
+			# for x_i in [0..5]
+			# 	for y_i in [0..5]
+					# cell = @grid.get(x_i, y_i)
+					# cell = @maze_rows[y_i
+			for maze_row, y_i in @maze_rows
+				for cell, x_i in maze_row
+					# puz_ctx.fillStyle = "blue"
+					# # puz_ctx.fillRect(x_i * grid_size + inset, y_i * grid_size + inset, grid_size - inset * 2, grid_size - inset * 2)
+					# puz_ctx.fillRect(x_i * grid_size, y_i * grid_size, grid_size, grid_size)
+					# puz_ctx.fillStyle = "black"
+					# puz_ctx.fillRect(x_i * grid_size + inset, y_i * grid_size + inset, grid_size - inset * 2, grid_size - inset * 2)
+					# unless cell.left_open
+					# 	puz_ctx.fillRect(x_i * grid_size, y_i * grid_size, inset - border, grid_size)
+					# unless cell.right_open
+					# 	puz_ctx.fillRect((x_i + 1) * grid_size - inset + border, y_i * grid_size, inset - border, grid_size)
+					
+					puz_ctx.save()
+					puz_ctx.translate(x_i * grid_size, y_i * grid_size)
+					
+					puz_ctx.fillStyle = "black"
+					puz_ctx.fillRect(0, 0, grid_size, grid_size)
+					
+					puz_ctx.beginPath()
+					puz_ctx.strokeStyle = "blue"
+					puz_ctx.lineWidth = 3
+					unless cell.left_open
+						puz_ctx.moveTo(inset, inset)
+						puz_ctx.lineTo(inset, grid_size - inset)
+					unless cell.right_open
+						puz_ctx.moveTo(grid_size - inset, inset)
+						puz_ctx.lineTo(grid_size - inset, grid_size - inset)
+					unless cell.top_open
+						puz_ctx.moveTo(inset, inset)
+						puz_ctx.lineTo(grid_size - inset, inset)
+					unless cell.bottom_open
+						puz_ctx.moveTo(inset, grid_size - inset)
+						puz_ctx.lineTo(grid_size - inset, grid_size - inset)
+					puz_ctx.stroke()
+					
+					puz_ctx.restore()
+			
 			draw_plucky_puck = (x, y)->
 				puz_ctx.save()
-				puz_ctx.translate(x, y + 10)
+				puz_ctx.translate(x, y)
 				puz_ctx.beginPath()
 				puz_ctx.arc(0, 0, 30, TAU/8, -TAU/8)
 				puz_ctx.lineTo(0, 0)
@@ -159,7 +213,7 @@ get_point = (point)->
 			
 			draw_ghost = (x, y, color, face_x=1)->
 				puz_ctx.save()
-				puz_ctx.translate(x, y + 30)
+				puz_ctx.translate(x, y + 20)
 				puz_ctx.beginPath()
 				puz_ctx.arc(0, -20, 30, 0, TAU/2, true)
 				for i in [0..6]

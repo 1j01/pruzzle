@@ -180,7 +180,7 @@ canvas.addEventListener "pointermove", (e)->
 			piece.moved()
 
 drop_piece_and_maybe_reveal_next = (current_piece)->
-	current_piece.held = false
+	current_piece?.held = false
 	if current_piece?.okay
 		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key

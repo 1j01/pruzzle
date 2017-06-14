@@ -136,7 +136,7 @@ get_point = (point)->
 		# could do stuff with [implied] wrapping
 		# even maze generation!
 		t: 0
-		background: "#002948"
+		background: "#000920"
 		width: 150 * 5
 		height: 150 * 5
 		n_keys: 5
@@ -165,35 +165,13 @@ get_point = (point)->
 		update: ->
 			# generate maze
 			
-			# x = 0
-			# y = 0
-			# stack = []
-			# loop
-			# 	unvisited = []
-			# 	for maze_row, y_i in @maze_rows
-			# 		for cell, x_i in maze_row
-			# 			
-			# actually, I guess we don't want a "perfect maze"
-			
-			# for maze_row, y_i in @maze_rows
-			# 	for cell, x_i in maze_row
-			# 		cell.left_open = random() < 0.5
-			# 		cell.right_open = random() < 0.5
-			# 		cell.top_open = random() < 0.5
-			# 		cell.bottom_open = random() < 0.5
-			
 			for maze_row, y_i in @maze_rows
 				for cell, x_i in maze_row
 					cell.open = random() < 0.5
 			
 			for maze_row, y_i in @maze_rows
 				for cell, x_i in maze_row
-					# cell.left_open = not not @maze_rows[y_i]?[x_i - 1]?.open
-					# cell.right_open = not not @maze_rows[y_i]?[x_i + 1]?.open
-					# cell.top_open = not not @maze_rows[y_i - 1]?[x_i]?.open
-					# cell.bottom_open = not not @maze_rows[y_i + 1]?[x_i]?.open
 					for side in cell.sides
-						# side.open = not not @maze_rows[y_i + side.dy]?[x_i + side.dx]?.open
 						side.open = (@maze_rows[y_i + side.dy]?[x_i + side.dx]?.open ? no) isnt cell.open
 		
 		draw: (puz_ctx, key_pieces)->
@@ -204,45 +182,19 @@ get_point = (point)->
 			wall_size = 100
 			border = 2
 			
-			# for x_i in [0..5]
-			# 	for y_i in [0..5]
-					# cell = @grid.get(x_i, y_i)
-					# cell = @maze_rows[y_i
 			for maze_row, y_i in @maze_rows
 				for cell, x_i in maze_row
-					# puz_ctx.fillStyle = "blue"
-					# # puz_ctx.fillRect(x_i * grid_size + inset, y_i * grid_size + inset, grid_size - inset * 2, grid_size - inset * 2)
-					# puz_ctx.fillRect(x_i * grid_size, y_i * grid_size, grid_size, grid_size)
-					# puz_ctx.fillStyle = "black"
-					# puz_ctx.fillRect(x_i * grid_size + inset, y_i * grid_size + inset, grid_size - inset * 2, grid_size - inset * 2)
-					# unless cell.left_open
-					# 	puz_ctx.fillRect(x_i * grid_size, y_i * grid_size, inset - border, grid_size)
-					# unless cell.right_open
-					# 	puz_ctx.fillRect((x_i + 1) * grid_size - inset + border, y_i * grid_size, inset - border, grid_size)
-					
 					puz_ctx.save()
 					puz_ctx.translate(x_i * grid_size, y_i * grid_size)
 					
-					puz_ctx.fillStyle = "black"
-					puz_ctx.fillRect(0, 0, grid_size, grid_size)
+					# puz_ctx.fillStyle = "black"
+					# puz_ctx.fillRect(0, 0, grid_size, grid_size)
 					
 					puz_ctx.beginPath()
 					puz_ctx.strokeStyle = "blue"
 					puz_ctx.lineWidth = 10
 					puz_ctx.lineCap = "round"
 					puz_ctx.lineJoin = "round"
-					# if cell.left_open isnt cell.open
-					# 	puz_ctx.moveTo(inset, inset)
-					# 	puz_ctx.lineTo(inset, grid_size - inset)
-					# if cell.right_open isnt cell.open
-					# 	puz_ctx.moveTo(grid_size - inset, inset)
-					# 	puz_ctx.lineTo(grid_size - inset, grid_size - inset)
-					# if cell.top_open isnt cell.open
-					# 	puz_ctx.moveTo(inset, inset)
-					# 	puz_ctx.lineTo(grid_size - inset, inset)
-					# if cell.bottom_open isnt cell.open
-					# 	puz_ctx.moveTo(inset, grid_size - inset)
-					# 	puz_ctx.lineTo(grid_size - inset, grid_size - inset)
 					
 					for side, side_index in cell.sides
 						# if side.open isnt cell.open
@@ -271,14 +223,14 @@ get_point = (point)->
 									# 	(grid_size + wall_size * ((side.dy or +1) + other_side.dy)) / 2
 									# 	15
 									# )
-									puz_ctx.lineTo(
-										(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
-										(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
-									)
-									puz_ctx.lineTo(
-										(grid_size + wall_size * (side.dx or -1) + (grid_size - wall_size) * other_side.dx) / 2
-										(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
-									)
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
+									# )
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx or -1) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
+									# )
 									puz_ctx.stroke()
 									puz_ctx.beginPath()
 									puz_ctx.save()
@@ -290,13 +242,17 @@ get_point = (point)->
 									# 	(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
 									# 	15
 									# )
-									# puz_ctx.lineTo(
-									# 	(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
-									# 	(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
-									# )
-									puz_ctx.arc(
+									puz_ctx.lineTo(
 										(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
 										(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
+									)
+									puz_ctx.arc(
+										# (grid_size + wall_size * ((side.dx or +1) + other_side.dx)) / 2
+										# (grid_size + wall_size * ((side.dy or +1) + other_side.dy)) / 2
+										# (grid_size + wall_size * (side.dx) + (grid_size - wall_size / 2) * other_side.dx) / 2
+										# (grid_size + wall_size * (side.dy) + (grid_size - wall_size / 2) * other_side.dy) / 2
+										(grid_size + wall_size * (side.dx) + (grid_size) * other_side.dx) / 2
+										(grid_size + wall_size * (side.dy) + (grid_size) * other_side.dy) / 2
 										15
 										0, TAU
 									)

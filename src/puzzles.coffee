@@ -140,6 +140,11 @@ get_point = (point)->
 		width: 150 * 5
 		height: 150 * 5
 		n_keys: 5
+		
+		# grid: new Grid
+		# update: ->
+			# generate maze
+		
 		draw: (puz_ctx, key_pieces)->
 			
 			draw_plucky_puck = (x, y)->

@@ -59,15 +59,11 @@ class Piece
 			@puz_y = @y - puzzle_y
 	
 	draw: ->
-		# TODO: refactor (pieces shouldn't have to know about pointers)
-		held = false
-		for pointerId, pointer of pointers
-			if pointer.drag_piece is @
-				held = true
-		hovered = @hover and not held
-		
 		ctx.save()
-		ctx.globalAlpha = 0.8 if held
+		# not sure about lowering the opacity like this
+		# it could be confusing if you're trying to match colors
+		# or just seeing the texture of things under it
+		ctx.globalAlpha = 0.8 if @held
 		
 		ctx.translate(@x, @y)
 		
@@ -76,7 +72,7 @@ class Piece
 		
 		ctx.drawImage(puz_canvas, -puzzle_x-@puz_x, -puzzle_y-@puz_y)
 		
-		if hovered
+		if @hovered and not @held
 			ctx.strokeStyle = "yellow"
 			ctx.strokeStyle = "lime" if @is_key
 			ctx.lineWidth = 6
@@ -122,7 +118,7 @@ canvas.addEventListener "mousemove", (e)->
 		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
 	for piece in pieces
-		piece.hover = piece is drag_piece
+		piece.hovered = piece is drag_piece
 	canvas.style.cursor = if drag_piece then "move" else "default"
 
 canvas.addEventListener "pointerdown", (e)->
@@ -133,8 +129,11 @@ canvas.addEventListener "pointerdown", (e)->
 			drag_piece = piece
 	
 	if drag_piece
+		# bring piece to the top
 		pieces.splice(pieces.indexOf(drag_piece), 1)
 		pieces.push(drag_piece)
+	
+	drag_piece?.held = true
 	
 	pointers[e.pointerId] =
 		x: x
@@ -181,6 +180,7 @@ canvas.addEventListener "pointermove", (e)->
 			piece.moved()
 
 drop_piece_and_maybe_reveal_next = (current_piece)->
+	current_piece.held = false
 	if current_piece?.okay
 		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key
@@ -262,10 +262,7 @@ do update_from_hash = ->
 addEventListener "hashchange", update_from_hash
 
 
-t = 20
 draw_puzzle = ->
-	t += 0.01
-	
 	if typeof puzzle.background is "function"
 		puzzle.background(puz_ctx)
 	else

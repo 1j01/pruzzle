@@ -140,24 +140,68 @@ get_point = (point)->
 		width: 150 * 5
 		height: 150 * 5
 		n_keys: 5
+		# TODO: show a patch of maze grid on the key pieces
+		# and apply it when placing the piece
+		# the patch could be 1x1 if the grid sizes are equal and the pieces are made completely square
+		# or 3x3 if there are tabs/slots, or more if the maze grid size is smaller
+		# maybe just the key pieces could be made square... except that would look weird
 		
 		# grid: new Grid
 		maze_rows:
-			for [0..5]
-				for [0..5]
-					left_open: no
-					right_open: no
-					top_open: no
-					bottom_open: no
+			for y_i in [0..5]
+				for x_i in [0..5]
+					# left_open: no
+					# right_open: no
+					# top_open: no
+					# bottom_open: no
+					sides: [
+						{dx: +1, dy: 0, name: "right", open: no}
+						{dx: 0, dy: +1, name: "down", open: no}
+						{dx: 0, dy: -1, name: "left", open: no}
+						{dx: -1, dy: 0, name: "up", open: no}
+					]
+					x: x_i
+					y: y_i
 		update: ->
 			# generate maze
 			
+			# x = 0
+			# y = 0
+			# stack = []
+			# loop
+			# 	unvisited = []
+			# 	for maze_row, y_i in @maze_rows
+			# 		for cell, x_i in maze_row
+			# 			
+			# actually, I guess we don't want a "perfect maze"
+			
+			# for maze_row, y_i in @maze_rows
+			# 	for cell, x_i in maze_row
+			# 		cell.left_open = random() < 0.5
+			# 		cell.right_open = random() < 0.5
+			# 		cell.top_open = random() < 0.5
+			# 		cell.bottom_open = random() < 0.5
+			
+			for maze_row, y_i in @maze_rows
+				for cell, x_i in maze_row
+					cell.open = random() < 0.5
+			
+			for maze_row, y_i in @maze_rows
+				for cell, x_i in maze_row
+					# cell.left_open = not not @maze_rows[y_i]?[x_i - 1]?.open
+					# cell.right_open = not not @maze_rows[y_i]?[x_i + 1]?.open
+					# cell.top_open = not not @maze_rows[y_i - 1]?[x_i]?.open
+					# cell.bottom_open = not not @maze_rows[y_i + 1]?[x_i]?.open
+					for side in cell.sides
+						# side.open = not not @maze_rows[y_i + side.dy]?[x_i + side.dx]?.open
+						side.open = (@maze_rows[y_i + side.dy]?[x_i + side.dx]?.open ? no) isnt cell.open
 		
 		draw: (puz_ctx, key_pieces)->
 			
-			# the "level" grid shouldn't necessarily have to be the same size as the jigsaw grid, but it would be more complicated
+			# the "level" grid shouldn't *necessarily* have to be the same size as the jigsaw grid, but it would be more complicated
 			grid_size = 150
-			inset = 20
+			# inset = 20
+			wall_size = 100
 			border = 2
 			
 			# for x_i in [0..5]
@@ -184,21 +228,91 @@ get_point = (point)->
 					
 					puz_ctx.beginPath()
 					puz_ctx.strokeStyle = "blue"
-					puz_ctx.lineWidth = 3
-					unless cell.left_open
-						puz_ctx.moveTo(inset, inset)
-						puz_ctx.lineTo(inset, grid_size - inset)
-					unless cell.right_open
-						puz_ctx.moveTo(grid_size - inset, inset)
-						puz_ctx.lineTo(grid_size - inset, grid_size - inset)
-					unless cell.top_open
-						puz_ctx.moveTo(inset, inset)
-						puz_ctx.lineTo(grid_size - inset, inset)
-					unless cell.bottom_open
-						puz_ctx.moveTo(inset, grid_size - inset)
-						puz_ctx.lineTo(grid_size - inset, grid_size - inset)
-					puz_ctx.stroke()
+					puz_ctx.lineWidth = 10
+					puz_ctx.lineCap = "round"
+					puz_ctx.lineJoin = "round"
+					# if cell.left_open isnt cell.open
+					# 	puz_ctx.moveTo(inset, inset)
+					# 	puz_ctx.lineTo(inset, grid_size - inset)
+					# if cell.right_open isnt cell.open
+					# 	puz_ctx.moveTo(grid_size - inset, inset)
+					# 	puz_ctx.lineTo(grid_size - inset, grid_size - inset)
+					# if cell.top_open isnt cell.open
+					# 	puz_ctx.moveTo(inset, inset)
+					# 	puz_ctx.lineTo(grid_size - inset, inset)
+					# if cell.bottom_open isnt cell.open
+					# 	puz_ctx.moveTo(inset, grid_size - inset)
+					# 	puz_ctx.lineTo(grid_size - inset, grid_size - inset)
 					
+					for side, side_index in cell.sides
+						# if side.open isnt cell.open
+						if side.open
+							puz_ctx.moveTo(
+								(grid_size + wall_size * (side.dx or -1)) / 2
+								(grid_size + wall_size * (side.dy or -1)) / 2
+							)
+							puz_ctx.lineTo(
+								(grid_size + wall_size * (side.dx or +1)) / 2
+								(grid_size + wall_size * (side.dy or +1)) / 2
+							)
+							# perpendicular_sides =
+							# 	[
+							# 		cell.sides[(side_index + 1) %% cell.sides.length]
+							# 		cell.sides[(side_index - 1) %% cell.sides.length]
+							# 	]
+							perpendicular_sides =
+								(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
+							for other_side in perpendicular_sides
+								unless other_side.open
+									# puz_ctx.arcTo(
+									# 	(grid_size + wall_size * (side.dx or +1)) / 2
+									# 	(grid_size + wall_size * (side.dy or +1)) / 2
+									# 	(grid_size + wall_size * ((side.dx or +1) + other_side.dx)) / 2
+									# 	(grid_size + wall_size * ((side.dy or +1) + other_side.dy)) / 2
+									# 	15
+									# )
+									puz_ctx.lineTo(
+										(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
+										(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
+									)
+									puz_ctx.lineTo(
+										(grid_size + wall_size * (side.dx or -1) + (grid_size - wall_size) * other_side.dx) / 2
+										(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
+									)
+									puz_ctx.stroke()
+									puz_ctx.beginPath()
+									puz_ctx.save()
+									puz_ctx.strokeStyle = "aqua"
+									# puz_ctx.arcTo(
+									# 	(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
+									# 	(grid_size + wall_size * (side.dx or -1) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
+									# 	15
+									# )
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
+									# )
+									puz_ctx.arc(
+										(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
+										(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
+										15
+										0, TAU
+									)
+									puz_ctx.stroke()
+									puz_ctx.restore()
+									puz_ctx.beginPath()
+									puz_ctx.strokeStyle = "red"
+					
+					puz_ctx.strokeStyle = "orange"
+					puz_ctx.stroke()
+					if cell.open
+						puz_ctx.beginPath()
+						puz_ctx.arc(grid_size / 2, grid_size / 2, grid_size / 15, 0, TAU)
+						puz_ctx.fillStyle = "white" # or yellow
+						puz_ctx.fill()
+
 					puz_ctx.restore()
 			
 			draw_plucky_puck = (x, y)->

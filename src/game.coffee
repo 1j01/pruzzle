@@ -287,6 +287,8 @@ animate ->
 	puz_canvas.width = canvas.width
 	puz_canvas.height = canvas.height
 	draw_puzzle()
+	if location.hash.match(/peak/)
+		ctx.drawImage(puz_canvas, 0, 0)
 	for piece in pieces
 		piece.draw()
 	return

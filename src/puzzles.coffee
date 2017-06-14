@@ -45,7 +45,6 @@ get_point = (point)->
 						puz_ctx.rotate(tx / 56)
 						puz_ctx.fillRect(cos(tx/6)*150*sin(i/60+tx), 50, 1, cos(tx/6+i) * 50)
 					puz_ctx.restore()
-					
 			}
 		]
 	}
@@ -141,58 +140,54 @@ get_point = (point)->
 		width: 150 * 5
 		height: 150 * 5
 		n_keys: 3
-		shapes: [
-			{
-				t: 0
-				draw: (puz_ctx, key_pieces)->
-					piece = key_pieces[1]
-					return unless piece
-					x = piece.puz_x + piece.puz_w/2
-					y = piece.puz_y + piece.puz_h/2
-					puz_ctx.save()
-					@t += 0.1
-					puz_ctx.translate(x, y)
+		draw: (puz_ctx, key_pieces)->
+			
+			draw_plucky_puck = (x, y)->
+				puz_ctx.save()
+				puz_ctx.translate(x, y)
+				puz_ctx.beginPath()
+				puz_ctx.arc(0, -30, 30, TAU/8, -TAU/8)
+				puz_ctx.lineTo(0, -30)
+				puz_ctx.fillStyle = "yellow"
+				puz_ctx.fill()
+				puz_ctx.restore()
+			
+			draw_ghost = (x, y, color, face_x=1)->
+				puz_ctx.save()
+				puz_ctx.translate(x, y + 30)
+				puz_ctx.beginPath()
+				puz_ctx.arc(0, -20, 30, 0, TAU/2, true)
+				for i in [0..6]
+					puz_ctx.lineTo((i/6 - 1/2) * 2 * 30, 10 - 10 * (i % 2))
+				puz_ctx.fillStyle = color
+				puz_ctx.fill()
+				
+				eye = (x, look_x)->
 					puz_ctx.beginPath()
-					puz_ctx.arc(0, -30, 30, TAU/8, -TAU/8)
-					puz_ctx.lineTo(0, -30)
-					puz_ctx.fillStyle = "yellow"
+					puz_ctx.arc(x, -30, 8, 0, TAU, true)
+					puz_ctx.fillStyle = "white"
 					puz_ctx.fill()
-					puz_ctx.restore()
-					
-			}
-			{
-				t: 0
-				draw: (puz_ctx, key_pieces)->
-					piece = key_pieces[0]
-					return unless piece
-					x = piece.puz_x + piece.puz_w/2
-					y = piece.puz_y + piece.puz_h/2
-					puz_ctx.save()
-					@t += 0.1
-					puz_ctx.translate(x, y + 30)
 					puz_ctx.beginPath()
-					puz_ctx.arc(0, -20, 30, 0, TAU/2, true)
-					for i in [0..6]
-						puz_ctx.lineTo((i/6 - 1/2) * 2 * 30, 10 - 10 * (i % 2))
-					puz_ctx.fillStyle = "orange"
+					puz_ctx.arc(x + look_x, -30, 4, 0, TAU, true)
+					puz_ctx.fillStyle = "blue"
 					puz_ctx.fill()
-					
-					eye = (x, look_x)->
-						puz_ctx.beginPath()
-						puz_ctx.arc(x, -30, 8, 0, TAU, true)
-						puz_ctx.fillStyle = "white"
-						puz_ctx.fill()
-						puz_ctx.beginPath()
-						puz_ctx.arc(x + look_x, -30, 4, 0, TAU, true)
-						puz_ctx.fillStyle = "blue"
-						puz_ctx.fill()
-					
-					eye(-10, 5)
-					eye(15, 5)
-					
-					puz_ctx.restore()
-			}
-		]
+				
+				eye(-10 * face_x, 5 * face_x)
+				eye(15 * face_x, 5 * face_x)
+				
+				puz_ctx.restore()
+			
+			piece = key_pieces[1]
+			if piece
+				x = piece.puz_x + piece.puz_w/2
+				y = piece.puz_y + piece.puz_h/2
+				draw_ghost(x, y, "orange", 1)
+			
+			piece = key_pieces[0]
+			if piece
+				x = piece.puz_x + piece.puz_w/2
+				y = piece.puz_y + piece.puz_h/2
+				draw_plucky_puck(x, y)
 	}
 	{
 		name: "Bo-Ring" # as in a boring ring

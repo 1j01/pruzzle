@@ -272,8 +272,10 @@ draw_puzzle = ->
 	puz_ctx.save()
 	puz_ctx.translate(puzzle_x, puzzle_y)
 	
-	for shape in puzzle.shapes
-		shape.draw(puz_ctx, key_pieces)
+	puzzle.draw(puz_ctx, key_pieces)
+	if puzzle.shapes?
+		for shape in puzzle.shapes
+			shape.draw?(puz_ctx, key_pieces)
 	
 	puz_ctx.restore()
 

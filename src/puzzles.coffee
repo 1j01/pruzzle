@@ -129,4 +129,104 @@ get_point = (point)->
 			}
 		]
 	}
+	{
+		name: "Pac-Man"
+		# name: "Onho its gOust h"
+		# name: "Casper the Friendly Ghost Eater"
+		
+		# could do stuff with [implied] wrapping
+		# even maze generation!
+		t: 0
+		background: "#002948"
+		width: 150 * 5
+		height: 150 * 5
+		n_keys: 3
+		shapes: [
+			{
+				t: 0
+				draw: (puz_ctx, key_pieces)->
+					piece = key_pieces[1]
+					return unless piece
+					x = piece.puz_x + piece.puz_w/2
+					y = piece.puz_y + piece.puz_h/2
+					puz_ctx.save()
+					@t += 0.1
+					puz_ctx.translate(x, y)
+					puz_ctx.beginPath()
+					puz_ctx.arc(0, -30, 30, TAU/8, -TAU/8)
+					puz_ctx.lineTo(0, -30)
+					puz_ctx.fillStyle = "yellow"
+					puz_ctx.fill()
+					puz_ctx.restore()
+					
+			}
+			{
+				t: 0
+				draw: (puz_ctx, key_pieces)->
+					piece = key_pieces[0]
+					return unless piece
+					x = piece.puz_x + piece.puz_w/2
+					y = piece.puz_y + piece.puz_h/2
+					puz_ctx.save()
+					@t += 0.1
+					puz_ctx.translate(x, y + 30)
+					puz_ctx.beginPath()
+					puz_ctx.arc(0, -20, 30, 0, TAU/2, true)
+					for i in [0..6]
+						puz_ctx.lineTo((i/6 - 1/2) * 2 * 30, 10 - 10 * (i % 2))
+					puz_ctx.fillStyle = "orange"
+					puz_ctx.fill()
+					
+					eye = (x, look_x)->
+						puz_ctx.beginPath()
+						puz_ctx.arc(x, -30, 8, 0, TAU, true)
+						puz_ctx.fillStyle = "white"
+						puz_ctx.fill()
+						puz_ctx.beginPath()
+						puz_ctx.arc(x + look_x, -30, 4, 0, TAU, true)
+						puz_ctx.fillStyle = "blue"
+						puz_ctx.fill()
+					
+					eye(-10, 5)
+					eye(15, 5)
+					
+					puz_ctx.restore()
+			}
+		]
+	}
+	{
+		name: "Bo-Ring" # as in a boring ring
+		t: 0
+		background: "#153958"
+		width: 150 * 5
+		height: 150 * 5
+		n_keys: 3
+		shapes: [
+			{
+				t: 0
+				draw: (puz_ctx, key_pieces)->
+					# center = get_point(key_pieces[0]?.points[0])
+					# return unless center
+					piece = key_pieces[0]
+					return unless piece
+					x = piece.puz_x + piece.puz_w/2
+					y = piece.puz_y + piece.puz_h/2
+					puz_ctx.save()
+					@t += 0.1
+					puz_ctx.fillStyle = "white"
+					puz_ctx.translate(x, y)
+					# for i in [0..100]
+					# 	# puz_ctx.rotate(@t / 56)
+					# 	# puz_ctx.fillRect(cos(@t/6)*150*sin(i/60+@t), 50, 15, cos(@t/6+i) * 50)
+					# 	# puz_ctx.rotate(@t / 50)
+					# 	puz_ctx.rotate(@t / 60)
+					# 	puz_ctx.fillRect(cos((@t/60)*TAU)*150*sin((i/100+@t/60)*TAU), 50, 15, cos((@t/60+i/100)*TAU) * 50)
+					puz_ctx.arc(0, -300, 300, 0, TAU)
+					puz_ctx.arc(0, -300, 200, 0, TAU, true)
+					puz_ctx.fill()
+					puz_ctx.restore()
+					
+			}
+		]
+	}
 ]

@@ -139,15 +139,15 @@ get_point = (point)->
 		background: "#002948"
 		width: 150 * 5
 		height: 150 * 5
-		n_keys: 3
+		n_keys: 5
 		draw: (puz_ctx, key_pieces)->
 			
 			draw_plucky_puck = (x, y)->
 				puz_ctx.save()
-				puz_ctx.translate(x, y)
+				puz_ctx.translate(x, y + 10)
 				puz_ctx.beginPath()
-				puz_ctx.arc(0, -30, 30, TAU/8, -TAU/8)
-				puz_ctx.lineTo(0, -30)
+				puz_ctx.arc(0, 0, 30, TAU/8, -TAU/8)
+				puz_ctx.lineTo(0, 0)
 				puz_ctx.fillStyle = "yellow"
 				puz_ctx.fill()
 				puz_ctx.restore()
@@ -181,7 +181,25 @@ get_point = (point)->
 			if piece
 				x = piece.puz_x + piece.puz_w/2
 				y = piece.puz_y + piece.puz_h/2
-				draw_ghost(x, y, "orange", 1)
+				draw_ghost(x, y, "#f8981b", 1) # Clyde
+			
+			piece = key_pieces[2]
+			if piece
+				x = piece.puz_x + piece.puz_w/2
+				y = piece.puz_y + piece.puz_h/2
+				draw_ghost(x, y, "#64cbe3", 1) # Inky
+			
+			piece = key_pieces[3]
+			if piece
+				x = piece.puz_x + piece.puz_w/2
+				y = piece.puz_y + piece.puz_h/2
+				draw_ghost(x, y, "#ed1d24", 1) # Blinky
+			
+			piece = key_pieces[4]
+			if piece
+				x = piece.puz_x + piece.puz_w/2
+				y = piece.puz_y + piece.puz_h/2
+				draw_ghost(x, y, "#edadce", 1) # Pinky
 			
 			piece = key_pieces[0]
 			if piece

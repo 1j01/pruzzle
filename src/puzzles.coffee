@@ -191,7 +191,7 @@ get_point = (point)->
 					# puz_ctx.fillRect(0, 0, grid_size, grid_size)
 					
 					puz_ctx.beginPath()
-					puz_ctx.strokeStyle = "blue"
+					puz_ctx.strokeStyle = "lime"
 					puz_ctx.lineWidth = 10
 					puz_ctx.lineCap = "round"
 					puz_ctx.lineJoin = "round"
@@ -234,7 +234,7 @@ get_point = (point)->
 									puz_ctx.stroke()
 									puz_ctx.beginPath()
 									puz_ctx.save()
-									puz_ctx.strokeStyle = "aqua"
+									# puz_ctx.strokeStyle = "aqua"
 									# puz_ctx.arcTo(
 									# 	(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
 									# 	(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
@@ -242,26 +242,32 @@ get_point = (point)->
 									# 	(grid_size + wall_size * (side.dy or -1) + (grid_size - wall_size) * other_side.dy) / 2
 									# 	15
 									# )
-									puz_ctx.lineTo(
-										(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
-										(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
-									)
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx) + (grid_size - wall_size) * other_side.dx) / 2
+									# 	(grid_size + wall_size * (side.dy) + (grid_size - wall_size) * other_side.dy) / 2
+									# )
+									# puz_ctx.arc(
+									# 	(grid_size + grid_size * (side.dx) + (wall_size) * other_side.dx) / 2
+									# 	(grid_size + grid_size * (side.dy) + (wall_size) * other_side.dy) / 2
+									# 	(grid_size - wall_size) / 2
+									# 	# 5
+									# 	0, TAU
+									# )
+									angle = Math.atan2(side.dy, side.dx)
 									puz_ctx.arc(
-										# (grid_size + wall_size * ((side.dx or +1) + other_side.dx)) / 2
-										# (grid_size + wall_size * ((side.dy or +1) + other_side.dy)) / 2
-										# (grid_size + wall_size * (side.dx) + (grid_size - wall_size / 2) * other_side.dx) / 2
-										# (grid_size + wall_size * (side.dy) + (grid_size - wall_size / 2) * other_side.dy) / 2
-										(grid_size + wall_size * (side.dx) + (grid_size) * other_side.dx) / 2
-										(grid_size + wall_size * (side.dy) + (grid_size) * other_side.dy) / 2
-										15
-										0, TAU
+										(grid_size + grid_size * (side.dx) + (wall_size) * other_side.dx) / 2
+										(grid_size + grid_size * (side.dy) + (wall_size) * other_side.dy) / 2
+										(grid_size - wall_size) / 2
+										# 5
+										angle, angle + TAU/4
 									)
+									puz_ctx.fill()
 									puz_ctx.stroke()
 									puz_ctx.restore()
 									puz_ctx.beginPath()
-									puz_ctx.strokeStyle = "red"
+									# puz_ctx.strokeStyle = "red"
 					
-					puz_ctx.strokeStyle = "orange"
+					# puz_ctx.strokeStyle = "orange"
 					puz_ctx.stroke()
 					if cell.open
 						puz_ctx.beginPath()

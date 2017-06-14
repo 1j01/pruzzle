@@ -284,8 +284,8 @@ animate ->
 	ctx.rect(puzzle_x, puzzle_y, puzzle.width, puzzle.height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
-	puz_canvas.width = canvas.width
-	puz_canvas.height = canvas.height
+	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
+	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
 	draw_puzzle()
 	if location.hash.match(/peak/)
 		ctx.drawImage(puz_canvas, 0, 0)

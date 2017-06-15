@@ -266,27 +266,45 @@ get_point = (point)->
 									# 	
 									# )
 									
-									puz_ctx.lineTo(
+									puz_ctx.moveTo(
 										# (grid_size + wall_size * (side.dx or around.d)) / 2
 										# (grid_size + wall_size * (side.dy or around.d)) / 2
 										(grid_size + wall_size * (side.dx or around.d / 2)) / 2
 										(grid_size + wall_size * (side.dy or around.d / 2)) / 2
 										# (grid_size + wall_size * ((side.dx or around.d) + around.side.dx / 2)) / 2
 										# (grid_size + wall_size * ((side.dy or around.d) + around.side.dy / 2)) / 2
-										# (grid_size + wall_size * (side.dx or around.d)) / 2 - side.dy * inset / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2 - side.dx * inset / 2
+										# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset / 2
+										# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset / 2
 										# (grid_size + grid_size * (side.dx or around.d)) / 2
 										# (grid_size + grid_size * (side.dy or around.d)) / 2
 									)
+									# puz_ctx.lineTo(
+									# 	# (grid_size + wall_size * (side.dx or around.d)) / 2
+									# 	# (grid_size + wall_size * (side.dy or around.d)) / 2
+									# 	# (grid_size + wall_size * (side.dx or around.d / 2)) / 2
+									# 	# (grid_size + wall_size * (side.dy or around.d / 2)) / 2
+									# 	# (grid_size + wall_size * ((side.dx or around.d) + around.side.dx / 2)) / 2
+									# 	# (grid_size + wall_size * ((side.dy or around.d) + around.side.dy / 2)) / 2
+									# 	# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset
+									# 	# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset
+									# 	(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
+									# 	(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
+									# )
 									puz_ctx.arcTo(
-										# (grid_size + wall_size * (side.dx or around.d)) / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2
-										(grid_size + grid_size * (side.dx or around.d)) / 2
-										(grid_size + grid_size * (side.dy or around.d)) / 2
+										(grid_size + wall_size * (side.dx or around.d)) / 2
+										(grid_size + wall_size * (side.dy or around.d)) / 2
+										# (grid_size + grid_size * (side.dx or around.d)) / 2
+										# (grid_size + grid_size * (side.dy or around.d)) / 2
+										# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset / 2
+										# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset / 2
+										# (grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
+										# (grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
 										# # # (grid_size + wall_size * (side.dx or around.d / 2)) / 2
 										# # # (grid_size + wall_size * (side.dy or around.d / 2)) / 2
-										(wall_size + wall_size * (side.dx or around.d + around.side.dx)) / 2
-										(wall_size + wall_size * (side.dy or around.d + around.side.dy)) / 2
+										# (wall_size + wall_size * (side.dx or around.d + around.side.dx)) / 2
+										# (wall_size + wall_size * (side.dy or around.d + around.side.dy)) / 2
+										(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
+										(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
 										# (grid_size + (wall_size - inset) * (side.dx or around.d)) / 2
 										# (grid_size + (wall_size - inset) * (side.dy or around.d)) / 2
 										inset / 2

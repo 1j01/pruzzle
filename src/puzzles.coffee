@@ -224,24 +224,21 @@ get_point = (point)->
 					
 					for [side_a, side_b] in corners
 						unless side_a.walled or side_b.walled
-							# if @maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open
 							if @maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open isnt cell.open
 								
 								# puz_ctx.moveTo(
-								# 	grid_size / 2
-								# 	grid_size / 2
+								# 	(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
+								# 	(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
 								# )
-								# puz_ctx.moveTo(
-								# 	(grid_size + wall_size * (side_a.dx or around.d / 2)) / 2
-								# 	(grid_size + wall_size * (side_a.dy or around.d / 2)) / 2
-								# )
-								puz_ctx.moveTo(
-									(grid_size + wall_size * (side_a.dx + side_b.dx)) / 2
-									(grid_size + wall_size * (side_a.dy + side_b.dy)) / 2
-								)
-								puz_ctx.lineTo(
+								puz_ctx.stroke()
+								puz_ctx.beginPath()
+								
+								angle = Math.atan2(side_a.dy, side_a.dx)
+								puz_ctx.arc(
 									(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
 									(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
+									inset
+									angle - TAU/2, angle - TAU/4
 								)
 					
 					puz_ctx.stroke()

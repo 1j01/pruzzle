@@ -152,8 +152,8 @@ get_point = (point)->
 					sides: [
 						{dx: +1, dy: 0, name: "right", open: no}
 						{dx: 0, dy: +1, name: "down", open: no}
-						{dx: 0, dy: -1, name: "left", open: no}
-						{dx: -1, dy: 0, name: "up", open: no}
+						{dx: -1, dy: 0, name: "left", open: no}
+						{dx: 0, dy: -1, name: "up", open: no}
 					]
 					x: x_i
 					y: y_i
@@ -217,6 +217,32 @@ get_point = (point)->
 										(grid_size + wall_size * (side.dx or around.d)) / 2
 										(grid_size + wall_size * (side.dy or around.d)) / 2
 									)
+					
+					corners =
+						for side, side_index in cell.sides
+							[side, cell.sides[(side_index + 1) %% cell.sides.length]]
+					
+					for [side_a, side_b] in corners
+						unless side_a.walled or side_b.walled
+							# if @maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open
+							if @maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open isnt cell.open
+								
+								# puz_ctx.moveTo(
+								# 	grid_size / 2
+								# 	grid_size / 2
+								# )
+								# puz_ctx.moveTo(
+								# 	(grid_size + wall_size * (side_a.dx or around.d / 2)) / 2
+								# 	(grid_size + wall_size * (side_a.dy or around.d / 2)) / 2
+								# )
+								puz_ctx.moveTo(
+									(grid_size + wall_size * (side_a.dx + side_b.dx)) / 2
+									(grid_size + wall_size * (side_a.dy + side_b.dy)) / 2
+								)
+								puz_ctx.lineTo(
+									(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
+									(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
+								)
 					
 					puz_ctx.stroke()
 					if cell.open

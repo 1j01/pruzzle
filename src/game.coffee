@@ -144,7 +144,7 @@ update_next_pieces = ->
 	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
 	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 	
-	puzzle.update()
+	puzzle.update?()
 
 puzzle = null
 

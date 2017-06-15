@@ -187,26 +187,23 @@ get_point = (point)->
 					puz_ctx.save()
 					puz_ctx.translate(x_i * grid_size, y_i * grid_size)
 					
-					# puz_ctx.fillStyle = "black"
-					# puz_ctx.fillRect(0, 0, grid_size, grid_size)
-					
 					puz_ctx.beginPath()
-					puz_ctx.strokeStyle = "lime"
-					puz_ctx.lineWidth = 10
+					puz_ctx.strokeStyle = "blue"
+					puz_ctx.lineWidth = 4
 					puz_ctx.lineCap = "round"
 					puz_ctx.lineJoin = "round"
 					
 					for side, side_index in cell.sides
 						# if side.open isnt cell.open
 						if side.open
-							puz_ctx.moveTo(
-								(grid_size + wall_size * (side.dx or -1)) / 2
-								(grid_size + wall_size * (side.dy or -1)) / 2
-							)
-							puz_ctx.lineTo(
-								(grid_size + wall_size * (side.dx or +1)) / 2
-								(grid_size + wall_size * (side.dy or +1)) / 2
-							)
+							# puz_ctx.moveTo(
+							# 	(grid_size + wall_size * (side.dx or -1)) / 2
+							# 	(grid_size + wall_size * (side.dy or -1)) / 2
+							# )
+							# puz_ctx.lineTo(
+							# 	(grid_size + wall_size * (side.dx or +1)) / 2
+							# 	(grid_size + wall_size * (side.dy or +1)) / 2
+							# )
 							# perpendicular_sides =
 							# 	[
 							# 		cell.sides[(side_index + 1) %% cell.sides.length]
@@ -214,7 +211,85 @@ get_point = (point)->
 							# 	]
 							perpendicular_sides =
 								(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
+							
+							for around in [
+								{d: +1, side: perpendicular_sides[0]}
+								{d: -1, side: perpendicular_sides[1]}
+							]
+								puz_ctx.moveTo(
+									(grid_size + wall_size * (side.dx)) / 2
+									(grid_size + wall_size * (side.dy)) / 2
+									# grid_size / 2
+									# grid_size / 2
+								)
+								puz_ctx.lineTo(
+									(grid_size + wall_size * (side.dx or around.d)) / 2
+									(grid_size + wall_size * (side.dy or around.d)) / 2
+								)
+								if 1#around.side.open
+									puz_ctx.stroke()
+									puz_ctx.beginPath()
+									puz_ctx.save()
+									puz_ctx.strokeStyle = "aqua"
+									# arcTo would be useful here
+									angle = Math.atan2(side.dy, side.dx)
+									inset = (grid_size - wall_size)
+									# puz_ctx.arc(
+									# 	# (wall_size + wall_size * (side.dx or around.d + around.side.dx)) / 2
+									# 	# (wall_size + wall_size * (side.dy or around.d + around.side.dy)) / 2
+									# 	(grid_size + (wall_size - inset) * (side.dx or around.d)) / 2
+									# 	(grid_size + (wall_size - inset) * (side.dy or around.d)) / 2
+									# 	inset / 2
+									# 	
+									# 	angle, angle + TAU/4
+									# 	
+									# 	# angle - TAU/9, angle
+									# 	
+									# 	# (if around.d is -1 then angle else angle - TAU/4)
+									# 	# (if around.d is -1 then angle + TAU/4 else angle)
+									# 	
+									# 	# (if around.d is +1 then angle else angle - TAU/4)
+									# 	# (if around.d is +1 then angle + TAU/4 else angle)
+									# 	
+									# 	# wavey
+									# 	# (if around.side.dx is 0 then angle else angle - TAU/4)
+									# 	# (if around.side.dx is 0 then angle + TAU/4 else angle)
+									# 	
+									# 	# (if around.side.dx is side.dy then angle else angle - TAU/4)
+									# 	# (if around.side.dx is side.dy then angle + TAU/4 else angle)
+									# 	
+									# 	# (if around.side.dx is -side.dy then angle else angle - TAU/4)
+									# 	# (if around.side.dx is -side.dy then angle + TAU/4 else angle)
+									# 	
+									# 	# 5
+									# 	# 0, TAU
+									# 	
+									# )
+									
+									puz_ctx.lineTo(
+										(grid_size + wall_size * (side.dx or around.d) / 2) / 2
+										(grid_size + wall_size * (side.dy or around.d) / 2) / 2
+									)
+									puz_ctx.arcTo(
+										(grid_size + wall_size * (side.dx or around.d)) / 2
+										(grid_size + wall_size * (side.dy or around.d)) / 2
+										(grid_size + (wall_size - inset * 2) * (side.dx or around.d)) / 2
+										(grid_size + (wall_size - inset * 20) * (side.dy or around.d)) / 2
+										inset / 2
+									)
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx or around.d)) / 2
+									# 	(grid_size + wall_size * (side.dy or around.d)) / 2
+									# )
+									
+									puz_ctx.stroke()
+									puz_ctx.restore()
+									puz_ctx.beginPath()
+							
 							for other_side in perpendicular_sides
+								
+								
+								
 								unless other_side.open
 									# puz_ctx.arcTo(
 									# 	(grid_size + wall_size * (side.dx or +1)) / 2
@@ -234,7 +309,7 @@ get_point = (point)->
 									puz_ctx.stroke()
 									puz_ctx.beginPath()
 									puz_ctx.save()
-									# puz_ctx.strokeStyle = "aqua"
+									puz_ctx.strokeStyle = "aqua"
 									# puz_ctx.arcTo(
 									# 	(grid_size + wall_size * (side.dx or +1) + (grid_size - wall_size) * other_side.dx) / 2
 									# 	(grid_size + wall_size * (side.dy or +1) + (grid_size - wall_size) * other_side.dy) / 2
@@ -254,13 +329,15 @@ get_point = (point)->
 									# 	0, TAU
 									# )
 									angle = Math.atan2(side.dy, side.dx)
-									puz_ctx.arc(
-										(grid_size + grid_size * (side.dx) + (wall_size) * other_side.dx) / 2
-										(grid_size + grid_size * (side.dy) + (wall_size) * other_side.dy) / 2
-										(grid_size - wall_size) / 2
-										# 5
-										angle, angle + TAU/4
-									)
+									inset = (grid_size - wall_size)
+									# puz_ctx.arc(
+									# 	grid_size / 2 + ((wall_size / 2) * (side.dx)) + ((grid_size + (grid_size - wall_size)) * other_side.dx / 2)
+									# 	grid_size / 2 + ((wall_size / 2) * (side.dy)) + ((grid_size + (grid_size - wall_size)) * other_side.dy / 2)
+									# 	(grid_size - wall_size) / 2
+									# 	# angle, angle + TAU/4
+									# 	# 5
+									# 	0, TAU
+									# )
 									puz_ctx.fill()
 									puz_ctx.stroke()
 									puz_ctx.restore()

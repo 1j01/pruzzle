@@ -157,6 +157,7 @@ get_point = (point)->
 					]
 					x: x_i
 					y: y_i
+		
 		update: ->
 			# generate maze
 			
@@ -213,10 +214,25 @@ get_point = (point)->
 										inset / 2
 									)
 								else
-									puz_ctx.lineTo(
-										(grid_size + wall_size * (side.dx or around.d)) / 2
-										(grid_size + wall_size * (side.dy or around.d)) / 2
-									)
+									# puz_ctx.lineTo(
+									# 	(grid_size + wall_size * (side.dx or around.d)) / 2
+									# 	(grid_size + wall_size * (side.dy or around.d)) / 2
+									# )
+									# puz_ctx.lineTo(
+									# 	(grid_size + grid_size * (side.dx or around.d)) / 2
+									# 	(grid_size + grid_size * (side.dy or around.d)) / 2
+									# )
+									# if around.side.walled
+									if (@maze_rows[y_i + side.dy + around.side.dy]?[x_i + side.dx + around.side.dx]?.open ? no) isnt cell.open
+										puz_ctx.lineTo(
+											(grid_size + ((wall_size * side.dx) or (grid_size * around.d))) / 2
+											(grid_size + ((wall_size * side.dy) or (grid_size * around.d))) / 2
+										)
+									else
+										puz_ctx.lineTo(
+											(grid_size + wall_size * (side.dx or around.d)) / 2
+											(grid_size + wall_size * (side.dy or around.d)) / 2
+										)
 					
 					corners =
 						for side, side_index in cell.sides
@@ -226,10 +242,6 @@ get_point = (point)->
 						unless side_a.walled or side_b.walled
 							if (@maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open ? no) isnt cell.open
 								
-								# puz_ctx.moveTo(
-								# 	(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
-								# 	(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
-								# )
 								puz_ctx.stroke()
 								puz_ctx.beginPath()
 								

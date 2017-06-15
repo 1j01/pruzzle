@@ -200,17 +200,8 @@ get_point = (point)->
 									(grid_size + wall_size * (side.dx)) / 2
 									(grid_size + wall_size * (side.dy)) / 2
 								)
-								puz_ctx.lineTo(
-									(grid_size + wall_size * (side.dx or around.d)) / 2
-									(grid_size + wall_size * (side.dy or around.d)) / 2
-								)
 								if around.side.open
-									puz_ctx.stroke()
-									puz_ctx.beginPath()
-									puz_ctx.save()
-									puz_ctx.strokeStyle = "aqua"
-									
-									puz_ctx.moveTo(
+									puz_ctx.lineTo(
 										(grid_size + wall_size * (side.dx or around.d / 2)) / 2
 										(grid_size + wall_size * (side.dy or around.d / 2)) / 2
 									)
@@ -221,10 +212,11 @@ get_point = (point)->
 										(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
 										inset / 2
 									)
-									
-									puz_ctx.stroke()
-									puz_ctx.restore()
-									puz_ctx.beginPath()
+								else
+									puz_ctx.lineTo(
+										(grid_size + wall_size * (side.dx or around.d)) / 2
+										(grid_size + wall_size * (side.dy or around.d)) / 2
+									)
 					
 					puz_ctx.stroke()
 					if cell.open

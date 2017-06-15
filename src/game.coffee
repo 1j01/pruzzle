@@ -1,4 +1,6 @@
 
+ctx = canvas.getContext("2d")
+
 puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
 @puzzle_x = 300

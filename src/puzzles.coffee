@@ -167,7 +167,7 @@ get_point = (point)->
 			for maze_row, y_i in @maze_rows
 				for cell, x_i in maze_row
 					for side in cell.sides
-						side.open = (@maze_rows[y_i + side.dy]?[x_i + side.dx]?.open ? no) isnt cell.open
+						side.walled = (@maze_rows[y_i + side.dy]?[x_i + side.dx]?.open ? no) isnt cell.open
 		
 		draw: (puz_ctx, key_pieces)->
 			
@@ -188,7 +188,7 @@ get_point = (point)->
 					puz_ctx.lineJoin = "round"
 					
 					for side in cell.sides
-						if side.open
+						if side.walled
 							perpendicular_sides =
 								(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
 							
@@ -200,7 +200,7 @@ get_point = (point)->
 									(grid_size + wall_size * (side.dx)) / 2
 									(grid_size + wall_size * (side.dy)) / 2
 								)
-								if around.side.open
+								if around.side.walled
 									puz_ctx.lineTo(
 										(grid_size + wall_size * (side.dx or around.d / 2)) / 2
 										(grid_size + wall_size * (side.dy or around.d / 2)) / 2

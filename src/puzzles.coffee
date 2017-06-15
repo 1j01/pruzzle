@@ -224,7 +224,7 @@ get_point = (point)->
 					
 					for [side_a, side_b] in corners
 						unless side_a.walled or side_b.walled
-							if @maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open isnt cell.open
+							if (@maze_rows[y_i + side_a.dy + side_b.dy]?[x_i + side_a.dx + side_b.dx]?.open ? no) isnt cell.open
 								
 								# puz_ctx.moveTo(
 								# 	(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))

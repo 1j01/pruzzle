@@ -204,7 +204,7 @@ get_point = (point)->
 									(grid_size + wall_size * (side.dx or around.d)) / 2
 									(grid_size + wall_size * (side.dy or around.d)) / 2
 								)
-								if 1#around.side.open
+								if around.side.open
 									puz_ctx.stroke()
 									puz_ctx.beginPath()
 									puz_ctx.save()

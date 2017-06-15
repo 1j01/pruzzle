@@ -146,14 +146,9 @@ get_point = (point)->
 		# or 3x3 if there are tabs/slots, or more if the maze grid size is smaller
 		# maybe just the key pieces could be made square... except that would look weird
 		
-		# grid: new Grid
 		maze_rows:
 			for y_i in [0..5]
 				for x_i in [0..5]
-					# left_open: no
-					# right_open: no
-					# top_open: no
-					# bottom_open: no
 					sides: [
 						{dx: +1, dy: 0, name: "right", open: no}
 						{dx: 0, dy: +1, name: "down", open: no}
@@ -178,9 +173,8 @@ get_point = (point)->
 			
 			# the "level" grid shouldn't *necessarily* have to be the same size as the jigsaw grid, but it would be more complicated
 			grid_size = 150
-			# inset = 20
 			wall_size = 100
-			border = 2
+			inset = (grid_size - wall_size)
 			
 			for maze_row, y_i in @maze_rows
 				for cell, x_i in maze_row
@@ -193,22 +187,8 @@ get_point = (point)->
 					puz_ctx.lineCap = "round"
 					puz_ctx.lineJoin = "round"
 					
-					for side, side_index in cell.sides
-						# if side.open isnt cell.open
+					for side in cell.sides
 						if side.open
-							# puz_ctx.moveTo(
-							# 	(grid_size + wall_size * (side.dx or -1)) / 2
-							# 	(grid_size + wall_size * (side.dy or -1)) / 2
-							# )
-							# puz_ctx.lineTo(
-							# 	(grid_size + wall_size * (side.dx or +1)) / 2
-							# 	(grid_size + wall_size * (side.dy or +1)) / 2
-							# )
-							# perpendicular_sides =
-							# 	[
-							# 		cell.sides[(side_index + 1) %% cell.sides.length]
-							# 		cell.sides[(side_index - 1) %% cell.sides.length]
-							# 	]
 							perpendicular_sides =
 								(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
 							
@@ -219,8 +199,6 @@ get_point = (point)->
 								puz_ctx.moveTo(
 									(grid_size + wall_size * (side.dx)) / 2
 									(grid_size + wall_size * (side.dy)) / 2
-									# grid_size / 2
-									# grid_size / 2
 								)
 								puz_ctx.lineTo(
 									(grid_size + wall_size * (side.dx or around.d)) / 2
@@ -231,88 +209,18 @@ get_point = (point)->
 									puz_ctx.beginPath()
 									puz_ctx.save()
 									puz_ctx.strokeStyle = "aqua"
-									# arcTo would be useful here
-									angle = Math.atan2(side.dy, side.dx)
-									inset = (grid_size - wall_size)
-									# puz_ctx.arc(
-									# 	# (wall_size + wall_size * (side.dx or around.d + around.side.dx)) / 2
-									# 	# (wall_size + wall_size * (side.dy or around.d + around.side.dy)) / 2
-									# 	(grid_size + (wall_size - inset) * (side.dx or around.d)) / 2
-									# 	(grid_size + (wall_size - inset) * (side.dy or around.d)) / 2
-									# 	inset / 2
-									# 	
-									# 	angle, angle + TAU/4
-									# 	
-									# 	# angle - TAU/9, angle
-									# 	
-									# 	# (if around.d is -1 then angle else angle - TAU/4)
-									# 	# (if around.d is -1 then angle + TAU/4 else angle)
-									# 	
-									# 	# (if around.d is +1 then angle else angle - TAU/4)
-									# 	# (if around.d is +1 then angle + TAU/4 else angle)
-									# 	
-									# 	# wavey
-									# 	# (if around.side.dx is 0 then angle else angle - TAU/4)
-									# 	# (if around.side.dx is 0 then angle + TAU/4 else angle)
-									# 	
-									# 	# (if around.side.dx is side.dy then angle else angle - TAU/4)
-									# 	# (if around.side.dx is side.dy then angle + TAU/4 else angle)
-									# 	
-									# 	# (if around.side.dx is -side.dy then angle else angle - TAU/4)
-									# 	# (if around.side.dx is -side.dy then angle + TAU/4 else angle)
-									# 	
-									# 	# 5
-									# 	# 0, TAU
-									# 	
-									# )
 									
 									puz_ctx.moveTo(
-										# (grid_size + wall_size * (side.dx or around.d)) / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2
 										(grid_size + wall_size * (side.dx or around.d / 2)) / 2
 										(grid_size + wall_size * (side.dy or around.d / 2)) / 2
-										# (grid_size + wall_size * ((side.dx or around.d) + around.side.dx / 2)) / 2
-										# (grid_size + wall_size * ((side.dy or around.d) + around.side.dy / 2)) / 2
-										# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset / 2
-										# (grid_size + grid_size * (side.dx or around.d)) / 2
-										# (grid_size + grid_size * (side.dy or around.d)) / 2
 									)
-									# puz_ctx.lineTo(
-									# 	# (grid_size + wall_size * (side.dx or around.d)) / 2
-									# 	# (grid_size + wall_size * (side.dy or around.d)) / 2
-									# 	# (grid_size + wall_size * (side.dx or around.d / 2)) / 2
-									# 	# (grid_size + wall_size * (side.dy or around.d / 2)) / 2
-									# 	# (grid_size + wall_size * ((side.dx or around.d) + around.side.dx / 2)) / 2
-									# 	# (grid_size + wall_size * ((side.dy or around.d) + around.side.dy / 2)) / 2
-									# 	# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset
-									# 	# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset
-									# 	(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
-									# 	(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
-									# )
 									puz_ctx.arcTo(
 										(grid_size + wall_size * (side.dx or around.d)) / 2
 										(grid_size + wall_size * (side.dy or around.d)) / 2
-										# (grid_size + grid_size * (side.dx or around.d)) / 2
-										# (grid_size + grid_size * (side.dy or around.d)) / 2
-										# (grid_size + wall_size * (side.dx or around.d)) / 2 - around.side.dx * inset / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2 - around.side.dy * inset / 2
-										# (grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
-										# (grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
-										# # # (grid_size + wall_size * (side.dx or around.d / 2)) / 2
-										# # # (grid_size + wall_size * (side.dy or around.d / 2)) / 2
-										# (wall_size + wall_size * (side.dx or around.d + around.side.dx)) / 2
-										# (wall_size + wall_size * (side.dy or around.d + around.side.dy)) / 2
 										(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
 										(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
-										# (grid_size + (wall_size - inset) * (side.dx or around.d)) / 2
-										# (grid_size + (wall_size - inset) * (side.dy or around.d)) / 2
 										inset / 2
 									)
-									# puz_ctx.lineTo(
-									# 	(grid_size + wall_size * (side.dx or around.d)) / 2
-									# 	(grid_size + wall_size * (side.dy or around.d)) / 2
-									# )
 									
 									puz_ctx.stroke()
 									puz_ctx.restore()

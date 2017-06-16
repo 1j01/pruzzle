@@ -205,7 +205,6 @@ draw_puzzle = ->
 
 
 animate ->
-	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	margin = puzzle_y
 	# TODO: smaller margins when scale would otherwize be less than one
 	# maybe even have the next piece miniaturized in a sort of toolbar/menubar
@@ -218,17 +217,49 @@ animate ->
 	# and maybe save resources when scaled down
 	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
 	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
-	# scale = canvas.height / puz_canvas.height
+	
+	draw_puzzle()
+	
+	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.save()
 	ctx.scale(scale, scale)
-	ctx.beginPath()
-	ctx.rect(puzzle_x, puzzle_y, puzzle.width, puzzle.height)
-	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
-	ctx.fill()
-	draw_puzzle()
+	
 	if location.hash.match(/peak/)
 		ctx.drawImage(puz_canvas, 0, 0)
+	
+	ctx.save()
+	ctx.translate(puzzle_x, puzzle_y)
+	
+	ctx.beginPath()
+	ctx.rect(0, 0, puzzle.width, puzzle.height)
+	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
+	ctx.fill()
+	
+	# this doesn't work because the key pieces have indeterminate puzzle positions
+	# ctx.strokeStyle = "rgba(0, 0, 0, 0.1)"
+	# ctx.lineWidth = 2
+	# for piece in [pieces..., next_pieces...]
+	# 	ctx.save()
+	# 	ctx.translate(piece.puz_x, piece.puz_y)
+	# 	# ctx.translate(piece.puz_x + 0.5, piece.puz_y + 0.5)
+	# 	ctx.stroke(piece.path)
+	# 	ctx.restore()
+	
+	ctx.beginPath()
+	for x_i in [1...5]
+		ctx.moveTo(x_i * 150, 0)
+		ctx.lineTo(x_i * 150, puzzle.height)
+	for y_i in [1...5]
+		ctx.moveTo(0, y_i * 150)
+		ctx.lineTo(puzzle.width, y_i * 150)
+	ctx.lineWidth = 1
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
+	ctx.stroke()
+	
+	ctx.restore()
+	
 	for piece in pieces
 		piece.draw(ctx, puz_canvas)
+	
 	ctx.restore()
 	return

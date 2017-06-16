@@ -4,17 +4,107 @@
 		<meta charset="utf-8">
 		<title>Pruzzle</title>
 		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
 	</head>
 	<body>
 		<script src="lib/coffee-script.js"></script>
 		<script src="src/Piece.coffee" type="text/coffeescript"></script>
 		<script src="src/puzzles.coffee" type="text/coffeescript"></script>
 		<script src="src/game.coffee" type="text/coffeescript"></script>
+		<script src="src/gui.coffee" type="text/coffeescript"></script>
 		<script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
 		<script>~function(){var d=document,b=d.body,c=b.appendChild(d.createElement("canvas")),p,i,k
-		canvas=c
-		b.style.overflow="hidden";b.style.margin=0;(onresize=function(){c.width=innerWidth,c.height=innerHeight})()
+		canvas=c;b.style.overflow="hidden";b.style.margin=0;(onresize=function(){c.width=innerWidth,c.height=innerHeight})()
 		animate=function a(f){f(),requestAnimationFrame(function(){a(f)})}
-		for(p=Object.getOwnPropertyNames(Math),i=0;k=p[i];i++){self[k]=Math[k]}TAU=PI*2}()</script>
+		for(p=Object.getOwnPropertyNames(Math),i=0;k=p[i];i++){self[k]=Math[k]}TAU=PI*2}()
+		</script>
+		<script src="lib/dialog-polyfill.js"></script>
+		<link rel="stylesheet" type="text/css" href="lib/dialog-polyfill.css" />
+		<div id="controls">
+			<button id="open-restart-dialogue"></button><!--<button id="toggle-mute" class="mute"></button>--><button id="fullscreen"></button>
+		</div>
+		<style>
+			body {
+				font-family: sans-serif;
+			}
+			#controls {
+				position: absolute;
+				top: 0;
+				font-size: 1.8em;
+			}
+			#controls button {
+				width: 4em;
+				height: 4em;
+				border: 0;
+				margin: 5px;
+				padding: 5px;
+				opacity: 0.7;
+				background-size: 2em;
+				background-position: center;
+				background-repeat: no-repeat;
+				background-color: transparent;
+			}
+			#controls button:hover {
+				background-color: rgba(0, 0, 0, 0.2);
+			}
+			#controls button:focus,
+			#controls button:active {
+				background-color: rgba(55, 126, 244, 0.6);
+			}
+			#open-restart-dialogue {
+				background-image: url("icons/restart.svg");
+			}
+			#fullscreen {
+				background-image: url("icons/fullscreen.svg");
+			}
+			.mute {
+				background-image: url("icons/mute.svg");
+			}
+			.unmute {
+				background-image: url("icons/unmute.svg");
+			}
+			:fullscreen #fullscreen {
+				display: none;
+			}
+			:-ms-fullscreen #fullscreen {
+				display: none;
+			}
+			:-moz-full-screen #fullscreen {
+				display: none;
+			}
+			:-webkit-full-screen #fullscreen {
+				display: none;
+			}
+			dialog {
+				background-color: #2D2D2D;
+				color: white;
+				border: 0;
+				padding: 10px 20px;
+			}
+			dialog p {
+				margin: 10px 0;
+			}
+			button {
+				background-color: #555;
+				color: white;
+				border: 0;
+				padding: 5px 10px;
+				margin: 10px 5px;
+			}
+			button:hover {
+				background-color: #666;
+			}
+			button:focus,
+			button:active {
+				background-color: #377EF4;
+				outline: 1px solid white;
+			}
+		</style>
+		<dialog id="restart-dialogue">
+			<p>Restart the puzzle?</p>
+			<button id="do-restart">Restart</button>
+			<button id="cancel-restart">Cancel</button>
+		</dialog>
 	</body>
 </html>

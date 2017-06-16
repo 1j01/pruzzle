@@ -45,7 +45,9 @@ canvas.addEventListener "mousemove", (e)->
 		piece.hovered = piece is drag_piece
 	canvas.style.cursor = if drag_piece then "move" else "default"
 
+
 canvas.addEventListener "pointerdown", (e)->
+	
 	# TODO: maybe undoable()
 	{x, y} = to_game_position(e)
 	for piece in pieces when not piece.locked_in
@@ -155,9 +157,7 @@ update_next_pieces = ->
 
 puzzle = null
 
-start_puzzle = (_puzzle)->
-	puzzle = _puzzle
-	
+@start_puzzle = ->
 	# reset grid, pieces, next_pieces, key_pieces
 	# maybe canvases, etc.
 	
@@ -180,10 +180,8 @@ reveal_next_piece = ->
 
 do update_from_hash = ->
 	lvl_n = parseInt(location.hash.replace("#", ""))
-	if puzzles[lvl_n]
-		start_puzzle(puzzles[lvl_n])
-	else
-		start_puzzle(puzzles[0])
+	puzzle = puzzles[lvl_n] ? puzzles[0]
+	start_puzzle()
 
 addEventListener "hashchange", update_from_hash
 

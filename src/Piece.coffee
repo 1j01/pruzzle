@@ -71,11 +71,15 @@ class @Piece
 			ctx.lineWidth = 6
 			ctx.stroke(@path)
 		
-		ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.4)"
 		ctx.lineWidth = 2
+		ctx.save()
+		ctx.translate(1, 2)
+		ctx.stroke(@path)
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"
 		ctx.translate(0, 1)
 		ctx.stroke(@path)
-		ctx.translate(0, -1)
+		ctx.restore()
 		
 		ctx.strokeStyle = "black"
 		ctx.lineWidth = 2

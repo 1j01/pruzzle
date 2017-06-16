@@ -6,6 +6,8 @@ puz_ctx = puz_canvas.getContext("2d")
 @puzzle_x = 300
 @puzzle_y = 70
 
+scale = 1
+
 pointers = {}
 
 class Grid
@@ -19,18 +21,23 @@ class Grid
 		@rows[y] ?= []
 		@rows[y][x] = val
 
-to_canvas_position = (evt)->
+to_canvas_position = (event)->
 	rect = canvas.getBoundingClientRect()  # absolute position and size of element
 	scaleX = canvas.width / rect.width     # ratio of bitmap to element width
 	scaleY = canvas.height / rect.height   # ratio of bitmap to element height
 	
-	x: (evt.clientX - rect.left) * scaleX  # scale mouse coordinates after they have
-	y: (evt.clientY - rect.top) * scaleY   # been adjusted to be relative to element
+	x: (event.clientX - rect.left) * scaleX  # scale mouse coordinates after they have
+	y: (event.clientY - rect.top) * scaleY   # been adjusted to be relative to element
+
+to_game_position = (event)->
+	{x, y} = to_canvas_position(event)
+	x: x / scale
+	y: y / scale
 
 canvas.setAttribute "touch-action", "none"
 
 canvas.addEventListener "mousemove", (e)->
-	{x, y} = to_canvas_position(e)
+	{x, y} = to_game_position(e)
 	for piece in pieces when not piece.locked_in
 		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
@@ -40,7 +47,7 @@ canvas.addEventListener "mousemove", (e)->
 
 canvas.addEventListener "pointerdown", (e)->
 	# TODO: maybe undoable()
-	{x, y} = to_canvas_position(e)
+	{x, y} = to_game_position(e)
 	for piece in pieces when not piece.locked_in
 		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
 			drag_piece = piece
@@ -60,7 +67,7 @@ canvas.addEventListener "pointerdown", (e)->
 		offset_y: drag_piece?.y - y
 
 canvas.addEventListener "pointermove", (e)->
-	{x, y} = to_canvas_position(e)
+	{x, y} = to_game_position(e)
 	pointer = pointers[e.pointerId]
 	if pointer
 		pointer.x = x
@@ -201,15 +208,29 @@ draw_puzzle = ->
 
 animate ->
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
+	margin = puzzle_y
+	# TODO: smaller margins when scale would otherwize be less than one
+	# maybe even have the next piece miniaturized in a sort of toolbar/menubar
+	scale = min(
+		canvas.height / (puzzle.height + margin * 2)
+		canvas.width / (puzzle.width + puzzle_x + margin)
+	)
+	# TODO: apply scale to the puzzle canvas as well
+	# to avoid pixelation when scaled up,
+	# and maybe save resources when scaled down
+	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
+	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
+	# scale = canvas.height / puz_canvas.height
+	ctx.save()
+	ctx.scale(scale, scale)
 	ctx.beginPath()
 	ctx.rect(puzzle_x, puzzle_y, puzzle.width, puzzle.height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
-	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
-	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
 	draw_puzzle()
 	if location.hash.match(/peak/)
 		ctx.drawImage(puz_canvas, 0, 0)
 	for piece in pieces
 		piece.draw(ctx, puz_canvas)
+	ctx.restore()
 	return

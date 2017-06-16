@@ -90,10 +90,10 @@ canvas.addEventListener "pointermove", (e)->
 			# - edge sides against puzzle sides
 			# - non-edge sides not against puzzle sides
 			# (*although maybe it should let you eject pieces in some cases)
-			d = 20
+			snap_dist = 20 / scale
 			if (
-				abs(piece.x - align_x) < d and
-				abs(piece.y - align_y) < d
+				abs(piece.x - align_x) < snap_dist and
+				abs(piece.y - align_y) < snap_dist
 			)
 				piece.x = align_x
 				piece.y = align_y

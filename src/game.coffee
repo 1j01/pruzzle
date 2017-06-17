@@ -3,12 +3,30 @@ ctx = canvas.getContext("2d")
 
 puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
-@puzzle_x = 300
-@puzzle_y = 70
+@puzzle_x = default_large_margin = 300
+@puzzle_y = default_margin = 70
 
 scale = 1
 
-pointers = {}
+calc_scale = ->
+	window.puzzle_x = default_large_margin
+	window.puzzle_y = default_margin
+	do decide = ->
+		margin = puzzle_y
+		# TODO: smaller margins when scale would otherwize be less than one
+		# maybe even have the next piece miniaturized in a sort of toolbar/menubar
+		scale = min(
+			canvas.height / (puzzle.height + margin + margin)
+			canvas.width / (puzzle.width + puzzle_x + margin)
+		)
+		if scale < 1 and puzzle_x is default_large_margin
+			window.puzzle_x *= 0.8
+			decide()
+		else if scale < 1 and puzzle_y > 0
+			window.puzzle_y = 0
+			decide()
+		else
+			scale
 
 class Grid
 	constructor: ->
@@ -34,12 +52,16 @@ to_game_position = (event)->
 	x: x / scale
 	y: y / scale
 
+pointers = {}
+
 canvas.setAttribute "touch-action", "none"
 
+# TODO: remove highlight for touch
+# (mousemove has completely different semantics via touch)
 canvas.addEventListener "mousemove", (e)->
 	{x, y} = to_game_position(e)
 	for piece in pieces when not piece.locked_in
-		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
+		if ctx.isPointInPath(piece.path, x - piece.x - puzzle_x, y - piece.y - puzzle_y)
 			drag_piece = piece
 	for piece in pieces
 		piece.hovered = piece is drag_piece
@@ -51,7 +73,7 @@ canvas.addEventListener "pointerdown", (e)->
 	# TODO: maybe undoable()
 	{x, y} = to_game_position(e)
 	for piece in pieces when not piece.locked_in
-		if ctx.isPointInPath(piece.path, x - piece.x, y - piece.y)
+		if ctx.isPointInPath(piece.path, x - piece.x - puzzle_x, y - piece.y - puzzle_y)
 			drag_piece = piece
 	
 	if drag_piece
@@ -79,10 +101,10 @@ canvas.addEventListener "pointermove", (e)->
 			piece.x = x + pointer.offset_x
 			piece.y = y + pointer.offset_y
 			
-			grid_x = Math.round((piece.x - puzzle_x) / 150)
-			grid_y = Math.round((piece.y - puzzle_y) / 150)
-			align_x = grid_x * 150 + puzzle_x
-			align_y = grid_y * 150 + puzzle_y
+			grid_x = Math.round(piece.x / 150)
+			grid_y = Math.round(piece.y / 150)
+			align_x = grid_x * 150
+			align_y = grid_y * 150
 			
 			# TODO: check geometric plausibility before snapping
 			# - piece's bounds within the puzzle bounds
@@ -138,10 +160,12 @@ update_next_pieces = ->
 				piece = new Piece
 				piece.puz_x = x_i * 150
 				piece.puz_y = y_i * 150
-				piece.x = (puzzle_x - piece.puz_w) / 2
-				# piece.y = (puzzle_y - piece.puz_h) / 2
-				# piece.y = puzzle_y
-				piece.y = puzzle_y + (puzzle.height - piece.puz_h) / 2
+				# TODO: ideally update already added next piece when the scale updates if it hasn't been moved
+				# or if it's been moved back, I suppose (which it should snap to if that's a thing)
+				piece.x = (-puzzle_x - piece.puz_w) / 2
+				# piece.y = (piece.puz_h) / 2
+				# piece.y = 0
+				piece.y = (puzzle.height - piece.puz_h) / 2
 				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
 				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle.width then "outie" else "edge"
 				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle.height then "outie" else "edge"
@@ -166,6 +190,8 @@ puzzle = null
 	pieces = [] # "in play"
 	next_pieces = [] # "out of play"
 	key_pieces = []
+	
+	calc_scale()
 	
 	update_next_pieces()
 	reveal_next_piece()
@@ -205,13 +231,8 @@ draw_puzzle = ->
 
 
 animate ->
-	margin = puzzle_y
-	# TODO: smaller margins when scale would otherwize be less than one
-	# maybe even have the next piece miniaturized in a sort of toolbar/menubar
-	scale = min(
-		canvas.height / (puzzle.height + margin * 2)
-		canvas.width / (puzzle.width + puzzle_x + margin)
-	)
+	calc_scale()
+	
 	# TODO: apply scale to the puzzle canvas as well
 	# to avoid pixelation when scaled up,
 	# and maybe save resources when scaled down
@@ -256,10 +277,10 @@ animate ->
 	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
 	ctx.stroke()
 	
-	ctx.restore()
-	
 	for piece in pieces
 		piece.draw(ctx, puz_canvas)
+	
+	ctx.restore()
 	
 	ctx.restore()
 	return

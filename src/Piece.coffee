@@ -48,8 +48,8 @@ class @Piece
 	
 	moved: ->
 		if @is_key
-			@puz_x = @x - puzzle_x
-			@puz_y = @y - puzzle_y
+			@puz_x = @x
+			@puz_y = @y
 	
 	draw: (ctx, puz_canvas)->
 		ctx.save()

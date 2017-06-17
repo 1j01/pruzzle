@@ -145,6 +145,10 @@ canvas.addEventListener "pointercancel", (e)->
 	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
+document.body.style.userSelect = "none"
+document.body.addEventListener "selectstart", (e)->
+	e.preventDefault()
+
 
 grid = new Grid
 

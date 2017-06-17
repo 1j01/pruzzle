@@ -237,6 +237,9 @@ draw_puzzle = ->
 animate ->
 	calc_scale()
 	
+	canvas.width = window.innerWidth
+	canvas.height = window.innerHeight
+	
 	# TODO: apply scale to the puzzle canvas as well
 	# to avoid pixelation when scaled up,
 	# and maybe save resources when scaled down

@@ -14,10 +14,10 @@
 		<script src="src/game.coffee" type="text/coffeescript"></script>
 		<script src="src/gui.coffee" type="text/coffeescript"></script>
 		<script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-		<script>~function(){var d=document,b=d.body,c=b.appendChild(d.createElement("canvas")),p,i,k
-		canvas=c;b.style.overflow="hidden";b.style.margin=0;(onresize=function(){c.width=innerWidth,c.height=innerHeight})()
-		animate=function a(f){f(),requestAnimationFrame(function(){a(f)})}
-		for(p=Object.getOwnPropertyNames(Math),i=0;k=p[i];i++){self[k]=Math[k]}TAU=PI*2}()
+		<script>
+			~function(){var d=document,b=d.body,c=b.appendChild(canvas=d.createElement("canvas")),p,i,k
+			animate=function a(f){f(),requestAnimationFrame(function(){a(f)})}
+			for(p=Object.getOwnPropertyNames(Math),i=0;k=p[i];i++){self[k]=Math[k]}TAU=PI*2}()
 		</script>
 		<script src="lib/dialog-polyfill.js"></script>
 		<link rel="stylesheet" type="text/css" href="lib/dialog-polyfill.css" />
@@ -27,6 +27,8 @@
 		<style>
 			body {
 				font-family: sans-serif;
+				overflow: hidden;
+				margin: 0;
 			}
 			#controls {
 				position: absolute;

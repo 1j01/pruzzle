@@ -13,8 +13,6 @@ calc_scale = ->
 	window.puzzle_y = default_margin
 	do decide = ->
 		margin = puzzle_y
-		# TODO: smaller margins when scale would otherwize be less than one
-		# maybe even have the next piece miniaturized in a sort of toolbar/menubar
 		scale = min(
 			canvas.height / (puzzle.height + margin + margin)
 			canvas.width / (puzzle.width + puzzle_x + margin)
@@ -237,12 +235,17 @@ draw_puzzle = ->
 animate ->
 	calc_scale()
 	
-	canvas.width = window.innerWidth
-	canvas.height = window.innerHeight
+	dipRect = canvas.getBoundingClientRect()
+	
+	canvas.width =
+		Math.round(devicePixelRatio * dipRect.right) -
+		Math.round(devicePixelRatio * dipRect.left)
+	canvas.height =
+		Math.round(devicePixelRatio * dipRect.bottom) -
+		Math.round(devicePixelRatio * dipRect.top)
 	
 	# TODO: apply scale to the puzzle canvas as well
-	# to avoid pixelation when scaled up,
-	# and maybe save resources when scaled down
+	# to avoid pixelation when scaled up
 	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
 	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
 	

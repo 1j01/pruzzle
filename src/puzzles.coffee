@@ -52,19 +52,17 @@ get_point = (point)->
 		name: "Test 2"
 		t: 0
 		background: (puz_ctx, puz_canvas, puzzle_x, puzzle_y)->
-			# sunset = puz_ctx.createLinearGradient puzzle_x, puzzle_y, puzzle_x, puzzle_y + @height
-			# sunset = puz_ctx.createLinearGradient puzzle_x, puzzle_y, puzzle_x, puzzle_y + @height
-			sunset = puz_ctx.createLinearGradient 0, 0, 0, puz_canvas.height
+			sunset = puz_ctx.createLinearGradient(puzzle_x, puzzle_y, puzzle_x, puzzle_y + @height)
+			# sunset = puz_ctx.createLinearGradient(0, 0, 0, puz_canvas.height)
 			
-			sunset.addColorStop 0.000, 'rgb(0, 255, 242)'
-			sunset.addColorStop 0.442, 'rgb(107, 99, 255)'
-			sunset.addColorStop 0.836, 'rgb(255, 38, 38)'
-			sunset.addColorStop 0.934, 'rgb(255, 135, 22)'
-			sunset.addColorStop 1.000, 'rgb(255, 252, 0)'
+			sunset.addColorStop(0.000, 'rgb(0, 255, 242)')
+			sunset.addColorStop(0.442, 'rgb(107, 99, 255)')
+			sunset.addColorStop(0.836, 'rgb(255, 38, 38)')
+			sunset.addColorStop(0.934, 'rgb(255, 135, 22)')
+			sunset.addColorStop(1.000, 'rgb(255, 252, 0)')
 			
 			puz_ctx.fillStyle = sunset
-			# puz_ctx.fillRect 0, 0, @width, @height
-			puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
+			puz_ctx.fillRect(0, 0, puz_canvas.width, puz_canvas.height)
 			
 			puz_ctx.save()
 			puz_ctx.translate(puzzle_x, puzzle_y)

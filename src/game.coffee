@@ -219,7 +219,7 @@ draw_puzzle = ->
 		puzzle.background(puz_ctx, puz_canvas, puzzle_x, puzzle_y)
 	else
 		puz_ctx.fillStyle = puzzle.background
-		puz_ctx.fillRect 0, 0, puz_canvas.width, puz_canvas.height
+		puz_ctx.fillRect(0, 0, puz_canvas.width, puz_canvas.height)
 	
 	puz_ctx.save()
 	puz_ctx.translate(puzzle_x, puzzle_y)

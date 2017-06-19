@@ -119,6 +119,7 @@ canvas.addEventListener "pointerdown", (e)->
 		pieces.push(drag_piece)
 	
 	drag_piece?.held = true
+	drag_piece?.in_pot = false
 	
 	pointers[e.pointerId] =
 		x: x
@@ -201,8 +202,7 @@ update_next_pieces = ->
 				piece = new Piece
 				piece.puz_x = x_i * 150
 				piece.puz_y = y_i * 150
-				# TODO: ideally update already added next piece when the scale updates if it hasn't been moved
-				# or if it's been moved back, I suppose (which it should snap to if that's a thing)
+				piece.in_pot = true
 				piece.x = piece_pot_x
 				piece.y = piece_pot_y
 				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
@@ -269,6 +269,11 @@ draw_puzzle = ->
 
 animate ->
 	update_layout()
+	
+	for piece in pieces when piece.in_pot
+		piece.x = piece_pot_x
+		piece.y = piece_pot_y
+		piece.moved()
 	
 	draw_puzzle()
 	

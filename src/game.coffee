@@ -6,25 +6,64 @@ puz_ctx = puz_canvas.getContext("2d")
 puzzle_x = default_large_margin = 300
 puzzle_y = default_margin = 70
 
+piece_pot_x = 0
+piece_pot_y = 0
+
 scale = 1
 
+puzzle = null
+
 update_layout = ->
-	puzzle_x = default_large_margin
-	puzzle_y = default_margin
-	do decide = ->
-		margin = puzzle_y
-		scale = min(
-			canvas.height / (puzzle.height + margin + margin)
-			canvas.width / (puzzle.width + puzzle_x + margin)
-		)
-		if scale < 1 and puzzle_x is default_large_margin
-			puzzle_x *= 0.8
-			decide()
-		else if scale < 1 and puzzle_y > 0
-			puzzle_y = 0
-			decide()
+	dipRect = canvas.getBoundingClientRect()
+	
+	canvas.width =
+		Math.round(devicePixelRatio * dipRect.right) -
+		Math.round(devicePixelRatio * dipRect.left)
+	canvas.height =
+		Math.round(devicePixelRatio * dipRect.bottom) -
+		Math.round(devicePixelRatio * dipRect.top)
+	
+	decide = (default_large_margin, default_margin)->
+		if canvas.width > canvas.height
+			puzzle_x = default_large_margin
+			puzzle_y = default_margin
+			margin = default_margin
+			scale = min(
+				canvas.width / (puzzle.width + puzzle_x + margin)
+				canvas.height / (puzzle.height + puzzle_y + margin)
+			)
+			puzzle_x = canvas.width / scale / 2 - puzzle.width / 2
+			puzzle_y = canvas.height / scale / 2 - puzzle.height / 2
+			if puzzle_x < default_large_margin
+				puzzle_x = default_large_margin
+			piece_pot_x = -150 * 3/2
+			piece_pot_y = (puzzle.height - 150) / 2
 		else
-			scale
+			puzzle_x = default_margin
+			puzzle_y = default_margin
+			margin = default_margin
+			scale = min(
+				canvas.width / (puzzle.width + puzzle_x + margin)
+				canvas.height / (puzzle.height + puzzle_y + default_large_margin)
+			)
+			puzzle_x = canvas.width / scale / 2 - puzzle.width / 2
+			puzzle_y = canvas.height / scale / 2 - puzzle.height / 2
+			if puzzle_y + puzzle.height + default_large_margin > canvas.height / scale
+				puzzle_y = canvas.height / scale - default_large_margin - puzzle.height
+			piece_pot_x = (puzzle.width - 150) / 2
+			piece_pot_y = puzzle.height + 150 / 2
+		
+		# if scale < 1 and large_margin > default_large_margin
+		# 	decide(large_margin * 0.8, margin)
+		if scale < 1 and default_margin > 0
+			decide(default_large_margin, 0)
+	
+	decide(default_large_margin, default_margin)
+	
+	# TODO: apply scale to the puzzle canvas as well
+	# to avoid pixelation when scaled up
+	puz_canvas.width = max(canvas.width / scale, puzzle_x + puzzle.width)
+	puz_canvas.height = max(canvas.height / scale, puzzle_y + puzzle.height)
 
 class Grid
 	constructor: ->
@@ -164,10 +203,8 @@ update_next_pieces = ->
 				piece.puz_y = y_i * 150
 				# TODO: ideally update already added next piece when the scale updates if it hasn't been moved
 				# or if it's been moved back, I suppose (which it should snap to if that's a thing)
-				piece.x = (-puzzle_x - piece.puz_w) / 2
-				# piece.y = (piece.puz_h) / 2
-				# piece.y = 0
-				piece.y = (puzzle.height - piece.puz_h) / 2
+				piece.x = piece_pot_x
+				piece.y = piece_pot_y
 				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
 				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle.width then "outie" else "edge"
 				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle.height then "outie" else "edge"
@@ -180,8 +217,6 @@ update_next_pieces = ->
 	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 	
 	puzzle.update?()
-
-puzzle = null
 
 @start_puzzle = ->
 	# reset grid, pieces, next_pieces, key_pieces
@@ -234,20 +269,6 @@ draw_puzzle = ->
 
 animate ->
 	update_layout()
-	
-	dipRect = canvas.getBoundingClientRect()
-	
-	canvas.width =
-		Math.round(devicePixelRatio * dipRect.right) -
-		Math.round(devicePixelRatio * dipRect.left)
-	canvas.height =
-		Math.round(devicePixelRatio * dipRect.bottom) -
-		Math.round(devicePixelRatio * dipRect.top)
-	
-	# TODO: apply scale to the puzzle canvas as well
-	# to avoid pixelation when scaled up
-	puz_canvas.width = max(canvas.width, puzzle_x + puzzle.width)
-	puz_canvas.height = max(canvas.height, puzzle_x + puzzle.height)
 	
 	draw_puzzle()
 	

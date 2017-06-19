@@ -51,7 +51,7 @@ class @Piece
 			@puz_x = @x
 			@puz_y = @y
 	
-	draw: (ctx, puz_canvas)->
+	draw: (ctx, puz_canvas, puzzle_x, puzzle_y)->
 		ctx.save()
 		# not sure about lowering the opacity like this
 		# it could be confusing if you're trying to match colors

@@ -3,14 +3,14 @@ ctx = canvas.getContext("2d")
 
 puz_canvas = document.createElement("canvas")
 puz_ctx = puz_canvas.getContext("2d")
-@puzzle_x = default_large_margin = 300
-@puzzle_y = default_margin = 70
+puzzle_x = default_large_margin = 300
+puzzle_y = default_margin = 70
 
 scale = 1
 
-calc_scale = ->
-	window.puzzle_x = default_large_margin
-	window.puzzle_y = default_margin
+update_layout = ->
+	puzzle_x = default_large_margin
+	puzzle_y = default_margin
 	do decide = ->
 		margin = puzzle_y
 		scale = min(
@@ -18,10 +18,10 @@ calc_scale = ->
 			canvas.width / (puzzle.width + puzzle_x + margin)
 		)
 		if scale < 1 and puzzle_x is default_large_margin
-			window.puzzle_x *= 0.8
+			puzzle_x *= 0.8
 			decide()
 		else if scale < 1 and puzzle_y > 0
-			window.puzzle_y = 0
+			puzzle_y = 0
 			decide()
 		else
 			scale
@@ -193,7 +193,7 @@ puzzle = null
 	next_pieces = [] # "out of play"
 	key_pieces = []
 	
-	calc_scale()
+	update_layout()
 	
 	update_next_pieces()
 	reveal_next_piece()
@@ -233,7 +233,7 @@ draw_puzzle = ->
 
 
 animate ->
-	calc_scale()
+	update_layout()
 	
 	dipRect = canvas.getBoundingClientRect()
 	
@@ -288,7 +288,7 @@ animate ->
 	ctx.stroke()
 	
 	for piece in pieces
-		piece.draw(ctx, puz_canvas)
+		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
 	
 	ctx.restore()
 	

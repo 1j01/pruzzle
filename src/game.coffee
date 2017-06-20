@@ -119,7 +119,8 @@ drop_piece_and_maybe_reveal_next = (piece)->
 		if piece.is_key
 			piece.locked_in = true
 			update_next_pieces()
-		reveal_next_piece()
+		unless piece_pot.next_piece
+			reveal_next_piece()
 
 to_canvas_position = (event)->
 	rect = canvas.getBoundingClientRect()    # absolute position and size of element

@@ -111,7 +111,12 @@ can_place_piece = (piece, grid_x, grid_y)->
 drop_piece_and_maybe_reveal_next = (current_piece)->
 	return unless current_piece
 	current_piece.held = false
-	if current_piece.okay and can_place_piece(current_piece, current_piece.grid_x, current_piece.grid_y)
+	if current_piece.snapped_to_pot
+		if piece_pot.next_piece
+			pieces.splice(pieces.indexOf(piece_pot.next_piece), 1)
+			next_pieces.unshift(piece_pot.next_piece)
+		piece_pot.next_piece = current_piece
+	else if current_piece.snapped_to_grid and can_place_piece(current_piece, current_piece.grid_x, current_piece.grid_y)
 		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key
 			current_piece.locked_in = true
@@ -208,9 +213,19 @@ canvas.addEventListener "pointermove", (e)->
 				piece.y = align_y
 				piece.grid_x = grid_x
 				piece.grid_y = grid_y
-				piece.okay = true
+				piece.snapped_to_grid = true
 			else
-				piece.okay = false
+				piece.snapped_to_grid = false
+			
+			if (
+				abs(piece.x - piece_pot.x) < snap_dist and
+				abs(piece.y - piece_pot.y) < snap_dist
+			)
+				piece.snapped_to_pot = true
+				piece.x = piece_pot.x
+				piece.y = piece_pot.y
+			else
+				piece.snapped_to_pot = false
 			
 			piece.moved()
 

@@ -10,6 +10,8 @@ get_point = (point)->
 		background: "#1178ff"
 		width: 150 * 5
 		height: 150 * 5
+		n_pieces_x: 5
+		n_pieces_y: 5
 		n_keys: 3
 		shapes: [
 			{
@@ -87,6 +89,8 @@ get_point = (point)->
 		
 		width: 150 * 5
 		height: 150 * 5
+		n_pieces_x: 5
+		n_pieces_y: 5
 		n_keys: 3
 		shapes: [
 			{
@@ -137,6 +141,8 @@ get_point = (point)->
 		background: "#000920"
 		width: 150 * 5
 		height: 150 * 5
+		n_pieces_x: 5
+		n_pieces_y: 5
 		n_keys: 5
 		# TODO: show a patch of maze grid on the key pieces
 		# and apply it when placing the piece
@@ -156,8 +162,8 @@ get_point = (point)->
 		update: ->
 			
 			# init grid
-			for y_i in [0..5]
-				for x_i in [0..5]
+			for y_i in [0..@n_pieces_x]
+				for x_i in [0..@n_pieces_y]
 					
 					cell =
 						sides: [
@@ -335,6 +341,8 @@ get_point = (point)->
 		background: "#153958"
 		width: 150 * 5
 		height: 150 * 5
+		n_pieces_x: 5
+		n_pieces_y: 5
 		n_keys: 3
 		shapes: [
 			{

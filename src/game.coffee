@@ -76,6 +76,49 @@ class Grid
 		@rows[y] ?= []
 		@rows[y][x] = val
 
+can_place_piece = (piece, grid_x, grid_y)->
+	can_place = true
+	if grid.get(grid_x, grid_y)
+		can_place = false
+	else
+		can_place = true
+		for side, side_index in piece.sides
+			adjacent_piece = grid.get(grid_x + side.dx, grid_y + side.dy)
+			if adjacent_piece?
+				adjacent_side = adjacent_piece.sides[(side_index + 2) % 4]
+				if (
+					(adjacent_side.type is "outie" and side.type is "outie") or
+					(adjacent_side.type is "innie" and side.type is "innie") or
+					(adjacent_side.type is "edge" and side.type in ["innie", "outie"])
+				)
+					can_place = false
+			not_outside_or_against_puzzle_bounds = switch side_index
+				when 0 then grid_y > 0
+				when 1 then grid_x + 1 < puzzle.n_pieces_x
+				when 2 then grid_y + 1 < puzzle.n_pieces_y
+				when 3 then grid_x > 0
+			against_puzzle_bounds = switch side_index
+				when 0 then grid_y is 0
+				when 1 then grid_x + 1 is puzzle.n_pieces_x
+				when 2 then grid_y + 1 is puzzle.n_pieces_y
+				when 3 then grid_x is 0
+			if side.type is "edge"
+				can_place = false unless against_puzzle_bounds
+			else
+				can_place = false unless not_outside_or_against_puzzle_bounds
+	can_place
+	
+
+drop_piece_and_maybe_reveal_next = (current_piece)->
+	return unless current_piece
+	current_piece.held = false
+	if current_piece.okay and can_place_piece(current_piece, current_piece.grid_x, current_piece.grid_y)
+		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
+		if current_piece.is_key
+			current_piece.locked_in = true
+			update_next_pieces()
+		reveal_next_piece()
+
 to_canvas_position = (event)->
 	rect = canvas.getBoundingClientRect()  # absolute position and size of element
 	scaleX = canvas.width / rect.width     # ratio of bitmap to element width
@@ -150,42 +193,14 @@ canvas.addEventListener "pointermove", (e)->
 			# and if you drop it at least, show why (such as with a red X over the edge)
 			# (or if it needs to be against an edge of the puzzle, maybe a red line or arrow)
 			# have it pop out to some fixed offset so it can't look like it's in place
-			if grid.get(grid_x, grid_y)
-				fits_on_grid = false
-			else
-				fits_on_grid = true
-				for side, side_index in piece.sides
-					adjacent_piece = grid.get(grid_x + side.dx, grid_y + side.dy)
-					if adjacent_piece?
-						adjacent_side = adjacent_piece.sides[(side_index + 2) % 4]
-						if (
-							(adjacent_side.type is "outie" and side.type is "outie") or
-							(adjacent_side.type is "innie" and side.type is "innie") or
-							(adjacent_side.type is "edge" and side.type in ["innie", "outie"])
-							# (adjacent_side.type is "outie" and side.type is "edge") or
-							# (adjacent_side.type is "edge" and side.type is "outie")
-						)
-						# unless (
-						# 	(adjacent_side.type is "innie" and side.type is "outie") or
-						# 	(adjacent_side.type is "outie" and side.type is "innie") or
-						# 	(adjacent_side.type is "edge" and side.type is "edge")
-						# )
-							fits_on_grid = false
-					off_of_edge = switch side_index
-						when 0 then align_y > 0
-						when 1 then align_x + piece.puz_w < puzzle.width
-						when 2 then align_y + piece.puz_h < puzzle.height
-						when 3 then align_x > 0
-					if side.type is "edge"
-						fits_on_grid = false if off_of_edge
-					else
-						fits_on_grid = false unless off_of_edge
+			
+			# also maybe eject other pieces in some cases
 			
 			snap_dist = 20 / scale
 			if (
 				abs(piece.x - align_x) < snap_dist and
 				abs(piece.y - align_y) < snap_dist and
-				fits_on_grid
+				can_place_piece(piece, grid_x, grid_y)
 			)
 				piece.x = align_x
 				piece.y = align_y
@@ -196,17 +211,6 @@ canvas.addEventListener "pointermove", (e)->
 				piece.okay = false
 			
 			piece.moved()
-
-drop_piece_and_maybe_reveal_next = (current_piece)->
-	current_piece?.held = false
-	# TODO: extract checking logic to a function like can_place_piece(piece, grid_x, grid_y)
-	# and check here as well, since one could drag two pieces to the same spot and release
-	if current_piece?.okay
-		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
-		if current_piece.is_key
-			current_piece.locked_in = true
-			update_next_pieces()
-		reveal_next_piece()
 
 canvas.addEventListener "pointerup", (e)->
 	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
@@ -231,8 +235,8 @@ key_pieces = []
 update_next_pieces = ->
 	next_pieces = []
 	temp_grid = new Grid
-	for x_i in [0...5]
-		for y_i in [0...5]
+	for x_i in [0...puzzle.n_pieces_x]
+		for y_i in [0...puzzle.n_pieces_y]
 			unless grid.get(x_i, y_i)
 				piece = new Piece
 				piece.puz_x = x_i * 150
@@ -358,10 +362,10 @@ animate ->
 	# 	ctx.restore()
 	
 	ctx.beginPath()
-	for x_i in [1...5]
+	for x_i in [1...puzzle.n_pieces_x]
 		ctx.moveTo(x_i * 150, 0)
 		ctx.lineTo(x_i * 150, puzzle.height)
-	for y_i in [1...5]
+	for y_i in [1...puzzle.n_pieces_y]
 		ctx.moveTo(0, y_i * 150)
 		ctx.lineTo(puzzle.width, y_i * 150)
 	ctx.lineWidth = 1
@@ -371,8 +375,8 @@ animate ->
 	for piece in pieces
 		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
 	
-	# for x_i in [-1...6]
-	# 	for y_i in [-1...6]
+	# for x_i in [-1...puzzle.n_pieces_x+1]
+	# 	for y_i in [-1...puzzle.n_pieces_y+1]
 	# 		if grid.get(x_i, y_i)
 	# 			ctx.beginPath()
 	# 			ctx.arc((x_i + 0.5) * 150, (y_i + 0.5) * 150, 7, 0, TAU)

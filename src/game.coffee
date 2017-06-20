@@ -6,12 +6,11 @@ puz_ctx = puz_canvas.getContext("2d")
 puzzle_x = default_large_margin = 300
 puzzle_y = default_margin = 70
 
-piece_pot_x = 0
-piece_pot_y = 0
-
 scale = 1
 
 puzzle = null
+
+piece_pot = {x: 0, y: 0, last_removed_piece: null, next_piece: null}
 
 update_layout = ->
 	dipRect = canvas.getBoundingClientRect()
@@ -36,8 +35,8 @@ update_layout = ->
 			puzzle_y = canvas.height / scale / 2 - puzzle.height / 2
 			if puzzle_x < default_large_margin
 				puzzle_x = default_large_margin
-			piece_pot_x = -150 * 3/2
-			piece_pot_y = (puzzle.height - 150) / 2
+			piece_pot.x = -150 * 3/2
+			piece_pot.y = (puzzle.height - 150) / 2
 		else
 			puzzle_x = default_margin
 			puzzle_y = default_margin
@@ -50,8 +49,8 @@ update_layout = ->
 			puzzle_y = canvas.height / scale / 2 - puzzle.height / 2
 			if puzzle_y + puzzle.height + default_large_margin > canvas.height / scale
 				puzzle_y = canvas.height / scale - default_large_margin - puzzle.height
-			piece_pot_x = (puzzle.width - 150) / 2
-			piece_pot_y = puzzle.height + 150 / 2
+			piece_pot.x = (puzzle.width - 150) / 2
+			piece_pot.y = puzzle.height + 150 / 2
 		
 		# if scale < 1 and large_margin > default_large_margin
 		# 	decide(large_margin * 0.8, margin)
@@ -157,13 +156,16 @@ canvas.addEventListener "pointerdown", (e)->
 			drag_piece = piece
 	
 	if drag_piece
+		drag_piece.held = true
+		
 		# bring piece to the top
 		pieces.splice(pieces.indexOf(drag_piece), 1)
 		pieces.push(drag_piece)
-	
-	if drag_piece?
-		drag_piece.held = true
-		drag_piece.in_pot = false
+		
+		# remove from pot / grid
+		if drag_piece is piece_pot.next_piece
+			piece_pot.next_piece = null
+			piece_pot.last_removed_piece = drag_piece
 		grid.set(drag_piece.grid_x, drag_piece.grid_y, null)
 	
 	pointers[e.pointerId] =
@@ -241,9 +243,8 @@ update_next_pieces = ->
 				piece = new Piece
 				piece.puz_x = x_i * 150
 				piece.puz_y = y_i * 150
-				piece.in_pot = true
-				piece.x = piece_pot_x
-				piece.y = piece_pot_y
+				piece.x = piece_pot.x
+				piece.y = piece_pot.y
 				
 				connect = (side_index)->
 					side = piece.sides[side_index]
@@ -295,6 +296,7 @@ update_next_pieces = ->
 reveal_next_piece = ->
 	next_piece = next_pieces.shift()
 	if next_piece
+		piece_pot.next_piece = next_piece
 		pieces.push(next_piece)
 		if next_piece.is_key
 			key_pieces.push(next_piece)
@@ -329,10 +331,10 @@ draw_puzzle = ->
 animate ->
 	update_layout()
 	
-	for piece in pieces when piece.in_pot
-		piece.x = piece_pot_x
-		piece.y = piece_pot_y
-		piece.moved()
+	if piece_pot.next_piece
+		piece_pot.next_piece.x = piece_pot.x
+		piece_pot.next_piece.y = piece_pot.y
+		piece_pot.next_piece.moved()
 	
 	draw_puzzle()
 	
@@ -351,6 +353,19 @@ animate ->
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
 	
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
+	ctx.lineWidth = 2
+	# for piece, i in next_pieces
+	if piece_pot.last_removed_piece and not piece_pot.next_piece
+		ctx.save()
+		# ctx.translate(piece.puz_x, piece.puz_y)
+		# ctx.translate(piece.puz_x + 0.5, piece.puz_y + 0.5)
+		ctx.translate(piece_pot.x, piece_pot.y)
+		# ctx.translate(i * -5, i * 5)
+		ctx.stroke(piece_pot.last_removed_piece.path)
+		ctx.restore()
+	
+	# trying to draw the grid with the shapes of the pieces
 	# this doesn't work because the key pieces have indeterminate puzzle positions
 	# ctx.strokeStyle = "rgba(0, 0, 0, 0.1)"
 	# ctx.lineWidth = 2
@@ -361,6 +376,7 @@ animate ->
 	# 	ctx.stroke(piece.path)
 	# 	ctx.restore()
 	
+	# draw a simple grid
 	ctx.beginPath()
 	for x_i in [1...puzzle.n_pieces_x]
 		ctx.moveTo(x_i * 150, 0)
@@ -375,6 +391,7 @@ animate ->
 	for piece in pieces
 		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
 	
+	# debug: show the filled spaces on the grid
 	# for x_i in [-1...puzzle.n_pieces_x+1]
 	# 	for y_i in [-1...puzzle.n_pieces_y+1]
 	# 		if grid.get(x_i, y_i)

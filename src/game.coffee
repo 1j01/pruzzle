@@ -52,8 +52,6 @@ update_layout = ->
 			piece_pot.x = (puzzle.width - 150) / 2
 			piece_pot.y = puzzle.height + 150 / 2
 		
-		# if scale < 1 and large_margin > default_large_margin
-		# 	decide(large_margin * 0.8, margin)
 		if scale < 1 and default_margin > 0
 			decide(default_large_margin, 0)
 	
@@ -91,42 +89,42 @@ can_place_piece = (piece, grid_x, grid_y)->
 					(adjacent_side.type is "edge" and side.type in ["innie", "outie"])
 				)
 					can_place = false
-			not_outside_or_against_puzzle_bounds = switch side_index
-				when 0 then grid_y > 0
-				when 1 then grid_x + 1 < puzzle.n_pieces_x
-				when 2 then grid_y + 1 < puzzle.n_pieces_y
-				when 3 then grid_x > 0
-			against_puzzle_bounds = switch side_index
+			outside_or_against_puzzle_boundary = switch side_index
+				when 0 then grid_y <= 0
+				when 1 then grid_x + 1 >= puzzle.n_pieces_x
+				when 2 then grid_y + 1 >= puzzle.n_pieces_y
+				when 3 then grid_x <= 0
+			against_puzzle_boundary = switch side_index
 				when 0 then grid_y is 0
 				when 1 then grid_x + 1 is puzzle.n_pieces_x
 				when 2 then grid_y + 1 is puzzle.n_pieces_y
 				when 3 then grid_x is 0
 			if side.type is "edge"
-				can_place = false unless against_puzzle_bounds
+				can_place = false unless against_puzzle_boundary
 			else
-				can_place = false unless not_outside_or_against_puzzle_bounds
+				can_place = false if outside_or_against_puzzle_boundary
 	can_place
 	
 
-drop_piece_and_maybe_reveal_next = (current_piece)->
-	return unless current_piece
-	current_piece.held = false
-	if current_piece.snapped_to_pot
+drop_piece_and_maybe_reveal_next = (piece)->
+	return unless piece
+	piece.held = false
+	if piece.snapped_to_pot
 		if piece_pot.next_piece
 			pieces.splice(pieces.indexOf(piece_pot.next_piece), 1)
 			next_pieces.unshift(piece_pot.next_piece)
-		piece_pot.next_piece = current_piece
-	else if current_piece.snapped_to_grid and can_place_piece(current_piece, current_piece.grid_x, current_piece.grid_y)
-		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
-		if current_piece.is_key
-			current_piece.locked_in = true
+		piece_pot.next_piece = piece
+	else if piece.snapped_to_grid and can_place_piece(piece, piece.grid_x, piece.grid_y)
+		grid.set(piece.grid_x, piece.grid_y, piece)
+		if piece.is_key
+			piece.locked_in = true
 			update_next_pieces()
 		reveal_next_piece()
 
 to_canvas_position = (event)->
-	rect = canvas.getBoundingClientRect()  # absolute position and size of element
-	scaleX = canvas.width / rect.width     # ratio of bitmap to element width
-	scaleY = canvas.height / rect.height   # ratio of bitmap to element height
+	rect = canvas.getBoundingClientRect()    # absolute position and size of element
+	scaleX = canvas.width / rect.width       # ratio of bitmap to element width
+	scaleY = canvas.height / rect.height     # ratio of bitmap to element height
 	
 	x: (event.clientX - rect.left) * scaleX  # scale mouse coordinates after they have
 	y: (event.clientY - rect.top) * scaleY   # been adjusted to be relative to element
@@ -136,6 +134,11 @@ to_game_position = (event)->
 	x: x / scale
 	y: y / scale
 
+piece_at = (x, y)->
+	for piece in pieces when not piece.locked_in
+		if ctx.isPointInPath(piece.path, x - piece.x - puzzle_x, y - piece.y - puzzle_y)
+			return piece
+
 pointers = {}
 
 canvas.setAttribute "touch-action", "none"
@@ -144,21 +147,19 @@ canvas.setAttribute "touch-action", "none"
 # (mousemove has completely different semantics via touch)
 canvas.addEventListener "mousemove", (e)->
 	{x, y} = to_game_position(e)
-	for piece in pieces when not piece.locked_in
-		if ctx.isPointInPath(piece.path, x - piece.x - puzzle_x, y - piece.y - puzzle_y)
-			drag_piece = piece
+	drag_piece = piece_at(x, y)
 	for piece in pieces
 		piece.hovered = piece is drag_piece
 	canvas.style.cursor = if drag_piece then "move" else "default"
+	# TODO: use grab and grabbing cursors rather than move (may need prefixes)
 
 
 canvas.addEventListener "pointerdown", (e)->
 	
-	# TODO: maybe undoable()
+	# TODO: make undoable/cancelable
+	
 	{x, y} = to_game_position(e)
-	for piece in pieces when not piece.locked_in
-		if ctx.isPointInPath(piece.path, x - piece.x - puzzle_x, y - piece.y - puzzle_y)
-			drag_piece = piece
+	drag_piece = piece_at(x, y)
 	
 	if drag_piece
 		drag_piece.held = true
@@ -221,9 +222,9 @@ canvas.addEventListener "pointermove", (e)->
 				abs(piece.x - piece_pot.x) < snap_dist and
 				abs(piece.y - piece_pot.y) < snap_dist
 			)
-				piece.snapped_to_pot = true
 				piece.x = piece_pot.x
 				piece.y = piece_pot.y
+				piece.snapped_to_pot = true
 			else
 				piece.snapped_to_pot = false
 			
@@ -234,7 +235,7 @@ canvas.addEventListener "pointerup", (e)->
 	delete pointers[e.pointerId]
 
 canvas.addEventListener "pointercancel", (e)->
-	# NOTE: maybe ought to revert to original position of piece instead
+	# TODO: revert to original position of piece instead
 	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
@@ -288,15 +289,12 @@ update_next_pieces = ->
 				next_pieces.push piece
 				temp_grid.set(x_i, y_i, piece)
 	
+	# TODO: sort randomly
 	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
-	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
 	
 	puzzle.update?()
 
 @start_puzzle = ->
-	# reset grid, pieces, next_pieces, key_pieces
-	# maybe canvases, etc.
-	
 	grid = new Grid
 	
 	pieces = [] # "in play"
@@ -370,26 +368,13 @@ animate ->
 	
 	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
 	ctx.lineWidth = 2
-	# for piece, i in next_pieces
 	if piece_pot.last_removed_piece and not piece_pot.next_piece
 		ctx.save()
-		# ctx.translate(piece.puz_x, piece.puz_y)
-		# ctx.translate(piece.puz_x + 0.5, piece.puz_y + 0.5)
 		ctx.translate(piece_pot.x, piece_pot.y)
-		# ctx.translate(i * -5, i * 5)
 		ctx.stroke(piece_pot.last_removed_piece.path)
 		ctx.restore()
-	
-	# trying to draw the grid with the shapes of the pieces
-	# this doesn't work because the key pieces have indeterminate puzzle positions
-	# ctx.strokeStyle = "rgba(0, 0, 0, 0.1)"
-	# ctx.lineWidth = 2
-	# for piece in [pieces..., next_pieces...]
-	# 	ctx.save()
-	# 	ctx.translate(piece.puz_x, piece.puz_y)
-	# 	# ctx.translate(piece.puz_x + 0.5, piece.puz_y + 0.5)
-	# 	ctx.stroke(piece.path)
-	# 	ctx.restore()
+		# not sure this should really be an outline of the last removed piece
+		# it introduces unnecessary state; could just be a circle or something
 	
 	# draw a simple grid
 	ctx.beginPath()
@@ -405,17 +390,6 @@ animate ->
 	
 	for piece in pieces
 		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
-	
-	# debug: show the filled spaces on the grid
-	# for x_i in [-1...puzzle.n_pieces_x+1]
-	# 	for y_i in [-1...puzzle.n_pieces_y+1]
-	# 		if grid.get(x_i, y_i)
-	# 			ctx.beginPath()
-	# 			ctx.arc((x_i + 0.5) * 150, (y_i + 0.5) * 150, 7, 0, TAU)
-	# 			ctx.fillStyle = "white"
-	# 			ctx.fill()
-	# 			ctx.strokeStyle = "black"
-	# 			ctx.stroke()
 	
 	ctx.restore()
 	

@@ -106,7 +106,7 @@ can_place_piece = (piece, grid_x, grid_y)->
 	can_place
 	
 
-drop_piece_and_maybe_reveal_next = (piece)->
+try_to_place_piece = (piece)->
 	return unless piece
 	piece.held = false
 	if piece.snapped_to_pot
@@ -232,12 +232,12 @@ canvas.addEventListener "pointermove", (e)->
 			piece.moved()
 
 canvas.addEventListener "pointerup", (e)->
-	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
+	try_to_place_piece(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
 canvas.addEventListener "pointercancel", (e)->
 	# TODO: revert to original position of piece instead
-	drop_piece_and_maybe_reveal_next(pointers[e.pointerId]?.drag_piece)
+	try_to_place_piece(pointers[e.pointerId]?.drag_piece)
 	delete pointers[e.pointerId]
 
 document.body.style.userSelect = "none"
@@ -362,22 +362,13 @@ animate ->
 	ctx.save()
 	ctx.translate(puzzle_x, puzzle_y)
 	
+	# show the puzzle area
 	ctx.beginPath()
 	ctx.rect(0, 0, puzzle.width, puzzle.height)
 	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
 	ctx.fill()
 	
-	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
-	ctx.lineWidth = 2
-	if piece_pot.last_removed_piece and not piece_pot.next_piece
-		ctx.save()
-		ctx.translate(piece_pot.x, piece_pot.y)
-		ctx.stroke(piece_pot.last_removed_piece.path)
-		ctx.restore()
-		# not sure this should really be an outline of the last removed piece
-		# it introduces unnecessary state; could just be a circle or something
-	
-	# draw a simple grid
+	# draw grid lines
 	ctx.beginPath()
 	for x_i in [1...puzzle.n_pieces_x]
 		ctx.moveTo(x_i * 150, 0)
@@ -389,6 +380,18 @@ animate ->
 	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
 	ctx.stroke()
 	
+	# show the piece pot
+	# not sure this should really be an outline of the last removed piece
+	# it introduces unnecessary state, and it could just be a circle or something
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
+	ctx.lineWidth = 2
+	if piece_pot.last_removed_piece and not piece_pot.next_piece
+		ctx.save()
+		ctx.translate(piece_pot.x, piece_pot.y)
+		ctx.stroke(piece_pot.last_removed_piece.path)
+		ctx.restore()
+	
+	# draw pieces
 	for piece in pieces
 		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
 	

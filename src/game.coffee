@@ -151,9 +151,10 @@ canvas.addEventListener "mousemove", (e)->
 	drag_piece = piece_at(x, y)
 	for piece in pieces
 		piece.hovered = piece is drag_piece
-	canvas.style.cursor = if drag_piece then "move" else "default"
-	# TODO: use grab and grabbing cursors rather than move (may need prefixes)
-
+	if drag_piece
+		canvas.classList.add("can-move-piece")
+	else
+		canvas.classList.remove("can-move-piece")
 
 canvas.addEventListener "pointerdown", (e)->
 	

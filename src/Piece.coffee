@@ -9,10 +9,10 @@ class @Piece
 		@puz_h = 150
 		
 		@sides = [
-			{type: "edge"}
-			{type: "edge"}
-			{type: "edge"}
-			{type: "edge"}
+			{dx: 0, dy: -1, name: "up", type: "edge"}
+			{dx: +1, dy: 0, name: "right", type: "edge"}
+			{dx: 0, dy: +1, name: "down", type: "edge"}
+			{dx: -1, dy: 0, name: "left", type: "edge"}
 		]
 		
 		@calcPath()

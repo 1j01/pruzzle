@@ -118,8 +118,10 @@ canvas.addEventListener "pointerdown", (e)->
 		pieces.splice(pieces.indexOf(drag_piece), 1)
 		pieces.push(drag_piece)
 	
-	drag_piece?.held = true
-	drag_piece?.in_pot = false
+	if drag_piece?
+		drag_piece.held = true
+		drag_piece.in_pot = false
+		grid.set(drag_piece.grid_x, drag_piece.grid_y, null)
 	
 	pointers[e.pointerId] =
 		x: x
@@ -144,16 +146,46 @@ canvas.addEventListener "pointermove", (e)->
 			align_x = grid_x * 150
 			align_y = grid_y * 150
 			
-			# TODO: check geometric plausibility before snapping
-			# - piece's bounds within the puzzle bounds
-			# - piece doesn't intersect placed pieces*
-			# - edge sides against puzzle sides
-			# - non-edge sides not against puzzle sides
-			# (*although maybe it should let you eject pieces in some cases)
+			# TODO: don't just fail to snap, show that it doesn't fit (such as by reddening the piece)
+			# and if you drop it at least, show why (such as with a red X over the edge)
+			# (or if it needs to be against an edge of the puzzle, maybe a red line or arrow)
+			# have it pop out to some fixed offset so it can't look like it's in place
+			if grid.get(grid_x, grid_y)
+				fits_on_grid = false
+			else
+				fits_on_grid = true
+				for side, side_index in piece.sides
+					adjacent_piece = grid.get(grid_x + side.dx, grid_y + side.dy)
+					if adjacent_piece?
+						adjacent_side = adjacent_piece.sides[(side_index + 2) % 4]
+						if (
+							(adjacent_side.type is "outie" and side.type is "outie") or
+							(adjacent_side.type is "innie" and side.type is "innie") or
+							(adjacent_side.type is "edge" and side.type in ["innie", "outie"])
+							# (adjacent_side.type is "outie" and side.type is "edge") or
+							# (adjacent_side.type is "edge" and side.type is "outie")
+						)
+						# unless (
+						# 	(adjacent_side.type is "innie" and side.type is "outie") or
+						# 	(adjacent_side.type is "outie" and side.type is "innie") or
+						# 	(adjacent_side.type is "edge" and side.type is "edge")
+						# )
+							fits_on_grid = false
+					off_of_edge = switch side_index
+						when 0 then align_y > 0
+						when 1 then align_x + piece.puz_w < puzzle.width
+						when 2 then align_y + piece.puz_h < puzzle.height
+						when 3 then align_x > 0
+					if side.type is "edge"
+						fits_on_grid = false if off_of_edge
+					else
+						fits_on_grid = false unless off_of_edge
+			
 			snap_dist = 20 / scale
 			if (
 				abs(piece.x - align_x) < snap_dist and
-				abs(piece.y - align_y) < snap_dist
+				abs(piece.y - align_y) < snap_dist and
+				fits_on_grid
 			)
 				piece.x = align_x
 				piece.y = align_y
@@ -167,6 +199,8 @@ canvas.addEventListener "pointermove", (e)->
 
 drop_piece_and_maybe_reveal_next = (current_piece)->
 	current_piece?.held = false
+	# TODO: extract checking logic to a function like can_place_piece(piece, grid_x, grid_y)
+	# and check here as well, since one could drag two pieces to the same spot and release
 	if current_piece?.okay
 		grid.set(current_piece.grid_x, current_piece.grid_y, current_piece)
 		if current_piece.is_key
@@ -196,6 +230,7 @@ key_pieces = []
 
 update_next_pieces = ->
 	next_pieces = []
+	temp_grid = new Grid
 	for x_i in [0...5]
 		for y_i in [0...5]
 			unless grid.get(x_i, y_i)
@@ -205,13 +240,33 @@ update_next_pieces = ->
 				piece.in_pot = true
 				piece.x = piece_pot_x
 				piece.y = piece_pot_y
-				piece.sides[0].type = if piece.puz_y > 0 then "innie" else "edge"
-				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle.width then "outie" else "edge"
-				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle.height then "outie" else "edge"
-				piece.sides[3].type = if piece.puz_x > 0 then "innie" else "edge"
+				
+				connect = (side_index)->
+					side = piece.sides[side_index]
+					adjacent_piece =
+						grid.get(x_i + side.dx, y_i + side.dy) or
+						temp_grid.get(x_i + side.dx, y_i + side.dy)
+					if adjacent_piece
+						adjacent_side = adjacent_piece.sides[(side_index + 2) % 4]
+						switch adjacent_side.type
+							when "innie" then "outie"
+							when "outie" then "innie"
+							when "edge" then "edge"
+							else
+								throw new Error "Unknown side type #{adjacent_side.type}"
+					else if random() < 0.5
+						"innie"
+					else
+						"outie"
+				
+				piece.sides[0].type = if piece.puz_y > 0 then connect(0) else "edge"
+				piece.sides[1].type = if piece.puz_x + piece.puz_w < puzzle.width then connect(1) else "edge"
+				piece.sides[2].type = if piece.puz_y + piece.puz_h < puzzle.height then connect(2) else "edge"
+				piece.sides[3].type = if piece.puz_x > 0 then connect(3) else "edge"
 				piece.calcPath()
 				piece.is_key = pieces.length < puzzle.n_keys
 				next_pieces.push piece
+				temp_grid.set(x_i, y_i, piece)
 	
 	next_pieces.sort((a, b)-> a.x + a.y % b.y > b.x - a.y)
 	# next_pieces.sort((a, b)-> (a.x + a.y) % b.y - (b.x % 3) - (a.y % 6) - (a.x % 3))
@@ -315,6 +370,16 @@ animate ->
 	
 	for piece in pieces
 		piece.draw(ctx, puz_canvas, puzzle_x, puzzle_y)
+	
+	# for x_i in [-1...6]
+	# 	for y_i in [-1...6]
+	# 		if grid.get(x_i, y_i)
+	# 			ctx.beginPath()
+	# 			ctx.arc((x_i + 0.5) * 150, (y_i + 0.5) * 150, 7, 0, TAU)
+	# 			ctx.fillStyle = "white"
+	# 			ctx.fill()
+	# 			ctx.strokeStyle = "black"
+	# 			ctx.stroke()
 	
 	ctx.restore()
 	

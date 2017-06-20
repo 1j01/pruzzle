@@ -9,8 +9,8 @@ puzzle_y = default_margin = 70
 scale = 1
 
 puzzle = null
-
 piece_pot = {x: 0, y: 0, last_removed_piece: null, next_piece: null}
+description_position = {x: 0, y: 0}
 
 update_layout = ->
 	dipRect = canvas.getBoundingClientRect()
@@ -37,6 +37,9 @@ update_layout = ->
 				puzzle_x = default_large_margin
 			piece_pot.x = -150 * 3/2
 			piece_pot.y = (puzzle.height - 150) / 2
+			description_position.x = piece_pot.x
+			description_position.y = piece_pot.y + 150*2
+			# description_position.y = piece_pot.y + 150*3/2
 		else
 			puzzle_x = default_margin
 			puzzle_y = default_margin
@@ -51,6 +54,8 @@ update_layout = ->
 				puzzle_y = canvas.height / scale - default_large_margin - puzzle.height
 			piece_pot.x = (puzzle.width - 150) / 2
 			piece_pot.y = puzzle.height + 150 / 2
+			description_position.x = piece_pot.x + 150*3/2
+			description_position.y = piece_pot.y + 150/2
 		
 		if scale < 1 and default_margin > 0
 			decide(default_large_margin, 0)
@@ -325,7 +330,7 @@ do update_from_hash = ->
 addEventListener "hashchange", update_from_hash
 
 
-draw_puzzle = ->
+render_puzzle_image = ->
 	if typeof puzzle.background is "function"
 		puzzle.background(puz_ctx, puz_canvas, puzzle_x, puzzle_y)
 	else
@@ -351,7 +356,7 @@ animate ->
 		piece_pot.next_piece.y = piece_pot.y
 		piece_pot.next_piece.moved()
 	
-	draw_puzzle()
+	render_puzzle_image()
 	
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.save()
@@ -391,6 +396,19 @@ animate ->
 		ctx.translate(piece_pot.x, piece_pot.y)
 		ctx.stroke(piece_pot.last_removed_piece.path)
 		ctx.restore()
+	
+	ctx.save()
+	ctx.translate(description_position.x, description_position.y)
+	ctx.fillStyle = "gray"
+	ctx.textAlign = "center"
+	ctx.textBaseline = "middle"
+	font_size = 30
+	ctx.font = "#{font_size}px Arial"
+	key_symbol = "🔑\uFE0E" # or \uD83D\uDDDD\uFE0E or ⚿ or ⚷
+	ctx.fillText("#{puzzle.n_keys} #{key_symbol}", 150/2, -font_size)
+	ctx.fillText("#{pieces.length + next_pieces.length} pc", 150/2, font_size)
+	# ctx.fillText("#{puzzle.n_keys} #{key_symbol} / #{pieces.length + next_pieces.length} pc", 150/2, 0)
+	ctx.restore()
 	
 	# draw pieces
 	for piece in pieces

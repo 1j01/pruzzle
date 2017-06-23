@@ -9,7 +9,7 @@ puzzle_y = default_margin = 70
 scale = 1
 
 puzzle = null
-piece_pot = {x: 0, y: 0, last_removed_piece: null, next_piece: null}
+piece_pot = {x: 0, y: 0, next_piece: null}
 description_position = {x: 0, y: 0}
 
 update_layout = ->
@@ -178,7 +178,6 @@ canvas.addEventListener "pointerdown", (e)->
 		# remove from pot / grid
 		if drag_piece is piece_pot.next_piece
 			piece_pot.next_piece = null
-			piece_pot.last_removed_piece = drag_piece
 		grid.set(drag_piece.grid_x, drag_piece.grid_y, null)
 	
 	pointers[e.pointerId] =
@@ -387,14 +386,18 @@ animate ->
 	ctx.stroke()
 	
 	# show the piece pot
-	# not sure this should really be an outline of the last removed piece
-	# it introduces unnecessary state, and it could just be a circle or something
 	ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
 	ctx.lineWidth = 2
-	if piece_pot.last_removed_piece and not piece_pot.next_piece
+	unless piece_pot.next_piece
 		ctx.save()
 		ctx.translate(piece_pot.x, piece_pot.y)
-		ctx.stroke(piece_pot.last_removed_piece.path)
+		ctx.beginPath()
+		# ctx.arc(150/2, 150/2, 150 * 0.3, 0, TAU)
+		# ctx.arc(150/2, 150/2, 150 * 0.7, 0, TAU)
+		ctx.rect(0, 0, 150, 150)
+		# ctx.rect(150/4, 150/4, 150/2, 150/2)
+		ctx.setLineDash([150/4, 150/2, 150/4, 0])
+		ctx.stroke()
 		ctx.restore()
 	
 	ctx.save()

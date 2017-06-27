@@ -266,11 +266,19 @@ get_point = (point)->
 								)
 					
 					puz_ctx.stroke()
-					if cell.open
+					
+					draw_dot = (x, y)->
 						puz_ctx.beginPath()
-						puz_ctx.arc(grid_size / 2, grid_size / 2, grid_size / 15, 0, TAU)
+						puz_ctx.arc(x, y, 8, 0, TAU)
 						puz_ctx.fillStyle = "white" # or yellow
 						puz_ctx.fill()
+						
+					if cell.open
+						draw_dot(grid_size / 2, grid_size / 2)
+						for side in cell.sides
+							unless side.walled
+								# draw_dot(grid_size / 2 + grid_size / 3 * side.dx, grid_size / 2 + grid_size / 3 * side.dy)
+								draw_dot(grid_size / 2 + grid_size / 2 * side.dx, grid_size / 2 + grid_size / 2 * side.dy)
 
 					puz_ctx.restore()
 			

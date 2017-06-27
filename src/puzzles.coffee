@@ -128,8 +128,6 @@ get_point = (point)->
 		# name: "Casper the Friendly Ghost Buster"
 		# name: "Plucky Pizza Pie Puck Person vs The Wrathful Wraiths"
 		
-		# could do stuff with [implied] wrapping
-		# even maze generation!
 		t: 0
 		background: "#000920"
 		width: 150 * 5
@@ -143,34 +141,31 @@ get_point = (point)->
 		# or 3x3 if there are tabs/slots, or more if the maze grid size is smaller
 		# maybe just the key pieces could be made square... except that would look weird
 		
-		# maze: new Grid
 		maze:
-			# rows: []
 			map: new Map
 			get: (x, y)->
-				# @rows[(y + 5) % 5]?[(x + 5) % 5]
-				# @rows[y]?[x]
 				@map.get("#{x}, #{y}")
 			set: (x, y, val)->
-				# @rows[y] ?= []
-				# @rows[y][x] = val
 				@map.set("#{x}, #{y}", val)
-				# # XXX: hardcoded n_pieces_x/y
-				# # @map.set("#{x + 5}, #{y - 5}", val)
-				# # @map.set("#{x - 5}, #{y - 5}", val)
-				# # @map.set("#{x + 5}, #{y + 5}", val)
-				# # @map.set("#{x - 5}, #{y + 5}", val)
-				# @map.set("#{x + 5}, #{y}", val)
-				# @map.set("#{x - 5}, #{y}", val)
-				# @map.set("#{x}, #{y + 5}", val)
-				# @map.set("#{x}, #{y - 5}", val)
+		
+		each_grid_cell: (callback)->
+			for x_i in [0...@n_pieces_x]
+				for y_i in [0...@n_pieces_y]
+					cell = @maze.get(x_i, y_i)
+					callback(cell)
+		
+		each_visible_cell: (callback)->
+			# TODO: actually use viewport information?
+			for x_i in [-22..@n_pieces_x+22]
+				for y_i in [-22..@n_pieces_y+22]
+					cell = @maze.get(x_i, y_i)
+					if cell
+						callback(cell)
 		
 		update: ->
 			
 			# init grid
-			# @maze.rows = []
 			@maze.map = new Map
-			
 			for x_i in [0...@n_pieces_x]
 				for y_i in [0...@n_pieces_y]
 					
@@ -189,171 +184,137 @@ get_point = (point)->
 							[side, cell.sides[(side_index + 1) %% cell.sides.length]]
 					
 					@maze.set(x_i, y_i, cell)
-					
-					# @map.set("#{x_i + 5}, #{y_i}", val)
-					# @map.set("#{x_i - 5}, #{y_i}", val)
-					# @map.set("#{x_i}, #{y_i + 5}", val)
-					# @map.set("#{x_i}, #{y_i - 5}", val)
-					
-					# for side in cell.sides
-					# 	wrapped_cell = JSON.parse(JSON.stringify(cell))
-					# 	wrapped_cell.x = x_i + @n_pieces_x * side.dx
-					# 	wrapped_cell.y = y_i + @n_pieces_y * side.dy
-					# 	@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
 			
 			# "generate maze"
-			# for maze_row, y_i in @maze.rows
-			# 	for cell, x_i in maze_row
-			
-			for x_i in [0...@n_pieces_x]
-				for y_i in [0...@n_pieces_y]
-					@maze.get(x_i, y_i).open = random() < 0.5
+			@each_grid_cell (cell)=>
+				cell.open = random() < 0.5
 			
 			# set up wrapping
-			# for x_i in [0..@n_pieces_x-1]
-			# 	@maze.set(x_i, @n_pieces_y-1, @maze.get(x_i, 0))
-			# 	# @maze.set(x_i, -1, @maze.get(x_i, @n_pieces_y-1))
-			# for y_i in [0..@n_pieces_y-1]
-			# 	@maze.set(@n_pieces_y-1, y_i, @maze.get(0, y_i))
-			# 	# @maze.set(-1, y_i, @maze.get(@n_pieces_y-1, y_i))
-			for x_i in [0...@n_pieces_x]
-				for y_i in [0...@n_pieces_y]
-					cell = @maze.get(x_i, y_i)
-					continue unless cell
-					for side in cell.sides
-						wrapped_cell = JSON.parse(JSON.stringify(cell))
-						
-						# NOTE: the sides of the corners need refer to the same side objects as in cell.sides
-						# TODO: DRY, probably make a Cell class
-						wrapped_cell.corners =
-							for _side, _side_index in wrapped_cell.sides
-								[_side, wrapped_cell.sides[(_side_index + 1) %% cell.sides.length]]
-						
-						wrapped_cell.x = x_i + @n_pieces_x * side.dx
-						wrapped_cell.y = y_i + @n_pieces_y * side.dy
-						
-						@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
+			# TODO: wrap towards the corners as well, anywhere visible
+			@each_grid_cell (cell)=>
+				for side in cell.sides
+					wrapped_cell = JSON.parse(JSON.stringify(cell))
+					
+					# NOTE: the sides of the corners need to refer to the instances in cell.sides
+					# TODO: DRY, probably make a Cell class
+					wrapped_cell.corners =
+						for _side, _side_index in wrapped_cell.sides
+							[_side, wrapped_cell.sides[(_side_index + 1) %% cell.sides.length]]
+					
+					wrapped_cell.x = cell.x + @n_pieces_x * side.dx
+					wrapped_cell.y = cell.y + @n_pieces_y * side.dy
+					
+					@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
 			
 			# define walls between open and closed cells
-			# for maze_row, y_i in @maze.rows
-			# 	for cell, x_i in maze_row
-			# for x_i in [0..@n_pieces_x-1]
-			# 	for y_i in [0..@n_pieces_y-1]
-			# for x_i in [-1..@n_pieces_x+1]
-			# 	for y_i in [-1..@n_pieces_y+1]
-			# for x_i in [0..@n_pieces_x]
-			# 	for y_i in [0..@n_pieces_y]
-			for x_i in [-22..@n_pieces_x+22]
-				for y_i in [-22..@n_pieces_y+22]
-					cell = @maze.get(x_i, y_i)
-					continue unless cell
-					for side in cell.sides
-						side.walled = (@maze.get(x_i + side.dx, y_i + side.dy)?.open ? no) isnt cell.open
+			@each_visible_cell (cell)=>
+				for side in cell.sides
+					side.walled = (
+						@maze.get(
+							cell.x + side.dx
+							cell.y + side.dy
+						)?.open ? no
+					) isnt cell.open
 		
 		draw: (puz_ctx, key_pieces)->
 			
 			# the maze grid shouldn't *necessarily* have to be the same size as the jigsaw grid,
 			# but it would be more complicated
+			# FIXME: wall_size:grid_size assumed to be 2:3
 			grid_size = 150
 			wall_size = 100
 			inset = (grid_size - wall_size)
 			
-			# for maze_row, y_i in @maze.rows
-			# 	for cell, x_i in maze_row
-			for x_i in [-22..@n_pieces_x+22]
-				for y_i in [-22..@n_pieces_y+22]
-					cell = @maze.get(x_i, y_i)
-					continue unless cell
-					
-					puz_ctx.save()
-					puz_ctx.translate(x_i * grid_size, y_i * grid_size)
-					
-					puz_ctx.beginPath()
-					puz_ctx.strokeStyle = "blue"
-					puz_ctx.lineWidth = 4
-					puz_ctx.lineCap = "round"
-					puz_ctx.lineJoin = "round"
-					
-					for side in cell.sides
-						if side.walled
-							perpendicular_sides =
-								(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
-							
-							for around in [
-								{d: +1, side: perpendicular_sides[0]}
-								{d: -1, side: perpendicular_sides[1]}
-							]
-								puz_ctx.moveTo(
-									(grid_size + wall_size * (side.dx)) / 2
-									(grid_size + wall_size * (side.dy)) / 2
+			@each_visible_cell (cell)=>
+				puz_ctx.save()
+				puz_ctx.translate(cell.x * grid_size, cell.y * grid_size)
+				
+				puz_ctx.beginPath()
+				puz_ctx.strokeStyle = "blue"
+				puz_ctx.lineWidth = 4
+				puz_ctx.lineCap = "round"
+				puz_ctx.lineJoin = "round"
+				
+				for side in cell.sides
+					if side.walled
+						perpendicular_sides =
+							(other_side for other_side in cell.sides when (other_side.dx is 0) isnt (side.dx is 0))
+						
+						for around in [
+							{d: +1, side: perpendicular_sides[0]}
+							{d: -1, side: perpendicular_sides[1]}
+						]
+							puz_ctx.moveTo(
+								(grid_size + wall_size * (side.dx)) / 2
+								(grid_size + wall_size * (side.dy)) / 2
+							)
+							if around.side.walled
+								puz_ctx.lineTo(
+									(grid_size + wall_size * (side.dx or around.d / 2)) / 2
+									(grid_size + wall_size * (side.dy or around.d / 2)) / 2
 								)
-								if around.side.walled
+								puz_ctx.arcTo(
+									(grid_size + wall_size * (side.dx or around.d)) / 2
+									(grid_size + wall_size * (side.dy or around.d)) / 2
+									(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
+									(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
+									inset / 2
+								)
+							else
+								if (
+									@maze.get(
+										cell.x + side.dx + around.side.dx
+										cell.y + side.dy + around.side.dy
+									)?.open ? no
+								) isnt cell.open
 									puz_ctx.lineTo(
-										(grid_size + wall_size * (side.dx or around.d / 2)) / 2
-										(grid_size + wall_size * (side.dy or around.d / 2)) / 2
-									)
-									puz_ctx.arcTo(
-										(grid_size + wall_size * (side.dx or around.d)) / 2
-										(grid_size + wall_size * (side.dy or around.d)) / 2
-										(grid_size + wall_size * (side.dx or around.d)) / 2 - side.dx * inset / 2
-										(grid_size + wall_size * (side.dy or around.d)) / 2 - side.dy * inset / 2
-										inset / 2
+										(grid_size + ((wall_size * side.dx) or (grid_size * around.d))) / 2
+										(grid_size + ((wall_size * side.dy) or (grid_size * around.d))) / 2
 									)
 								else
-									if (
-										@maze.get(
-											x_i + side.dx + around.side.dx
-											y_i + side.dy + around.side.dy
-										)?.open ? no
-									) isnt cell.open
-										puz_ctx.lineTo(
-											(grid_size + ((wall_size * side.dx) or (grid_size * around.d))) / 2
-											(grid_size + ((wall_size * side.dy) or (grid_size * around.d))) / 2
-										)
-									else
-										puz_ctx.lineTo(
-											(grid_size + wall_size * (side.dx or around.d)) / 2
-											(grid_size + wall_size * (side.dy or around.d)) / 2
-										)
+									puz_ctx.lineTo(
+										(grid_size + wall_size * (side.dx or around.d)) / 2
+										(grid_size + wall_size * (side.dy or around.d)) / 2
+									)
+				
+				for [side_a, side_b] in cell.corners
+					unless side_a.walled or side_b.walled
+						if (
+							@maze.get(
+								cell.x + side_a.dx + side_b.dx
+								cell.y + side_a.dy + side_b.dy
+							)?.open ? no
+						) isnt cell.open
+							
+							puz_ctx.stroke()
+							puz_ctx.beginPath()
+							
+							angle = Math.atan2(side_a.dy, side_a.dx)
+							puz_ctx.arc(
+								(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
+								(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
+								inset
+								angle - TAU/2, angle - TAU/4
+							)
+				
+				puz_ctx.stroke()
+				
+				draw_dot = (x, y)->
+					puz_ctx.beginPath()
+					puz_ctx.arc(x, y, 8, 0, TAU)
+					puz_ctx.fillStyle = "white" # or yellow
+					puz_ctx.fill()
 					
-					for [side_a, side_b] in cell.corners
-						unless side_a.walled or side_b.walled
-							if (
-								@maze.get(
-									x_i + side_a.dx + side_b.dx
-									y_i + side_a.dy + side_b.dy
-								)?.open ? no
-							) isnt cell.open
-								
-								puz_ctx.stroke()
-								puz_ctx.beginPath()
-								
-								angle = Math.atan2(side_a.dy, side_a.dx)
-								puz_ctx.arc(
-									(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
-									(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
-									inset
-									angle - TAU/2, angle - TAU/4
-								)
-					
-					puz_ctx.stroke()
-					
-					draw_dot = (x, y)->
-						puz_ctx.beginPath()
-						puz_ctx.arc(x, y, 8, 0, TAU)
-						puz_ctx.fillStyle = "white" # or yellow
-						puz_ctx.fill()
-						
-					if cell.open
-						draw_dot(grid_size / 2, grid_size / 2)
-						for side in cell.sides
-							unless side.walled
-								# NOTE: dots are drawn overlapping
-								# could iterate over the grid looking at horizontal and vertical pairs of cells
-								# and theoretically improve anti-aliasing
-								draw_dot(grid_size / 2 + grid_size / 2 * side.dx, grid_size / 2 + grid_size / 2 * side.dy)
+				if cell.open
+					draw_dot(grid_size / 2, grid_size / 2)
+					for side in cell.sides
+						unless side.walled
+							# NOTE: dots are drawn overlapping
+							# could iterate over the grid looking at horizontal and vertical pairs of cells
+							# and theoretically improve anti-aliasing
+							draw_dot(grid_size / 2 + grid_size / 2 * side.dx, grid_size / 2 + grid_size / 2 * side.dy)
 
-					puz_ctx.restore()
+				puz_ctx.restore()
 			
 			draw_pac_man = (x, y)->
 				puz_ctx.save()

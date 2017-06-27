@@ -71,6 +71,11 @@ class @Piece
 			ctx.lineWidth = 6
 			ctx.stroke(@path)
 		
+		if @held and @invalid_placement
+			ctx.strokeStyle = "red"
+			ctx.lineWidth = 6
+			ctx.stroke(@path)
+		
 		ctx.strokeStyle = "rgba(255, 255, 255, 0.4)"
 		ctx.lineWidth = 2
 		ctx.save()

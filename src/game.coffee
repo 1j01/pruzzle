@@ -119,13 +119,24 @@ try_to_place_piece = (piece)->
 			pieces.splice(pieces.indexOf(piece_pot.next_piece), 1)
 			next_pieces.unshift(piece_pot.next_piece)
 		piece_pot.next_piece = piece
-	else if piece.snapped_to_grid and can_place_piece(piece, piece.grid_x, piece.grid_y)
-		grid.set(piece.grid_x, piece.grid_y, piece)
-		if piece.is_key
-			piece.locked_in = true
-			update_next_pieces()
-		unless piece_pot.next_piece
-			reveal_next_piece()
+	else if piece.snapped_to_grid
+		if can_place_piece(piece, piece.grid_x, piece.grid_y)
+			grid.set(piece.grid_x, piece.grid_y, piece)
+			if piece.is_key
+				piece.locked_in = true
+				update_next_pieces()
+			unless piece_pot.next_piece
+				reveal_next_piece()
+		else
+			piece.x += 15
+			piece.y += 15
+			piece.moved()
+			# TODO: pop out towards the center (unless in the center)?
+			# or a random direction except where it needs to avoid going offscreen?
+			
+			# TODO: show why a piece doesn't fit with an animation
+			# such as a red X over a mismatched edge
+			# or if it needs to be against an edge of the puzzle, a red line or arrow
 
 to_canvas_position = (event)->
 	rect = canvas.getBoundingClientRect()    # absolute position and size of element
@@ -203,26 +214,29 @@ canvas.addEventListener "pointermove", (e)->
 			align_x = grid_x * 150
 			align_y = grid_y * 150
 			
-			# TODO: don't just fail to snap, show that it doesn't fit (such as by reddening the piece)
-			# and if you drop it at least, show why (such as with a red X over the edge)
-			# (or if it needs to be against an edge of the puzzle, maybe a red line or arrow)
-			# have it pop out to some fixed offset so it can't look like it's in place
+			within_grid =
+				(grid_x >= 0) and
+				(grid_y >= 0) and
+				(grid_x + 1 <= puzzle.n_pieces_x) and
+				(grid_y + 1 <= puzzle.n_pieces_y)
 			
-			# also maybe eject other pieces in some cases
+			# TODO: maybe eject other pieces in some cases
 			
 			snap_dist = 20 / scale
 			if (
 				abs(piece.x - align_x) < snap_dist and
 				abs(piece.y - align_y) < snap_dist and
-				can_place_piece(piece, grid_x, grid_y)
+				within_grid
 			)
 				piece.x = align_x
 				piece.y = align_y
 				piece.grid_x = grid_x
 				piece.grid_y = grid_y
 				piece.snapped_to_grid = true
+				piece.invalid_placement = not can_place_piece(piece, grid_x, grid_y)
 			else
 				piece.snapped_to_grid = false
+				piece.invalid_placement = false
 			
 			if (
 				abs(piece.x - piece_pot.x) < snap_dist and
@@ -392,10 +406,7 @@ animate ->
 		ctx.save()
 		ctx.translate(piece_pot.x, piece_pot.y)
 		ctx.beginPath()
-		# ctx.arc(150/2, 150/2, 150 * 0.3, 0, TAU)
-		# ctx.arc(150/2, 150/2, 150 * 0.7, 0, TAU)
 		ctx.rect(0, 0, 150, 150)
-		# ctx.rect(150/4, 150/4, 150/2, 150/2)
 		ctx.setLineDash([150/4, 150/2, 150/4, 0])
 		ctx.stroke()
 		ctx.restore()

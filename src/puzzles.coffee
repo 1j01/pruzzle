@@ -23,10 +23,6 @@ get_point = (point)->
 					a = get_point(key_pieces[1]?.points[0])
 					b = get_point(key_pieces[2]?.points[0])
 					return unless a and b
-					# puz_ctx.beginPath()
-					# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
-					# puz_ctx.fillStyle = "lime"
-					# puz_ctx.fill()
 					puz_ctx.beginPath()
 					puz_ctx.moveTo(a.x, a.y)
 					puz_ctx.lineTo(b.x, b.y)
@@ -61,7 +57,7 @@ get_point = (point)->
 			sunset.addColorStop(0.442, 'rgb(107, 99, 255)')
 			sunset.addColorStop(0.836, 'rgb(255, 38, 38)')
 			sunset.addColorStop(0.934, 'rgb(255, 135, 22)')
-			sunset.addColorStop(1.000, 'rgb(255, 252, 0)')
+			sunset.addColorStop(1.000, 'rgb(255, 202, 16)')
 			
 			puz_ctx.fillStyle = sunset
 			puz_ctx.fillRect(0, 0, puz_canvas.width, puz_canvas.height)
@@ -102,10 +98,6 @@ get_point = (point)->
 					a = get_point(key_pieces[1]?.points[0])
 					b = get_point(key_pieces[2]?.points[0])
 					return unless a and b
-					# puz_ctx.beginPath()
-					# puz_ctx.arc(@center.x + @center.piece.x, @center.y + @center.piece.y, 50, 0, TAU)
-					# puz_ctx.fillStyle = "lime"
-					# puz_ctx.fill()
 					puz_ctx.beginPath()
 					puz_ctx.moveTo(a.x, a.y)
 					puz_ctx.lineTo(b.x, b.y)
@@ -132,8 +124,9 @@ get_point = (point)->
 	}
 	{
 		name: "Pac-Man"
-		# name: "Onho its gOust h"
-		# name: "Casper the Friendly Ghost Eater"
+		# name: "Onho its gOust hhhrun"
+		# name: "Casper the Friendly Ghost Buster"
+		# name: "Plucky Pizza Pie Puck Person vs The Wrathful Wraiths"
 		
 		# could do stuff with [implied] wrapping
 		# even maze generation!
@@ -193,7 +186,8 @@ get_point = (point)->
 		
 		draw: (puz_ctx, key_pieces)->
 			
-			# the "level" grid shouldn't *necessarily* have to be the same size as the jigsaw grid, but it would be more complicated
+			# the maze grid shouldn't *necessarily* have to be the same size as the jigsaw grid,
+			# but it would be more complicated
 			grid_size = 150
 			wall_size = 100
 			inset = (grid_size - wall_size)
@@ -235,7 +229,12 @@ get_point = (point)->
 										inset / 2
 									)
 								else
-									if (@maze.get(x_i + side.dx + around.side.dx, y_i + side.dy + around.side.dy)?.open ? no) isnt cell.open
+									if (
+										@maze.get(
+											x_i + side.dx + around.side.dx
+											y_i + side.dy + around.side.dy
+										)?.open ? no
+									) isnt cell.open
 										puz_ctx.lineTo(
 											(grid_size + ((wall_size * side.dx) or (grid_size * around.d))) / 2
 											(grid_size + ((wall_size * side.dy) or (grid_size * around.d))) / 2
@@ -248,7 +247,12 @@ get_point = (point)->
 					
 					for [side_a, side_b] in cell.corners
 						unless side_a.walled or side_b.walled
-							if (@maze.get(x_i + side_a.dx + side_b.dx, y_i + side_a.dy + side_b.dy)?.open ? no) isnt cell.open
+							if (
+								@maze.get(
+									x_i + side_a.dx + side_b.dx
+									y_i + side_a.dy + side_b.dy
+								)?.open ? no
+							) isnt cell.open
 								
 								puz_ctx.stroke()
 								puz_ctx.beginPath()
@@ -270,7 +274,7 @@ get_point = (point)->
 
 					puz_ctx.restore()
 			
-			draw_plucky_puck = (x, y)->
+			draw_pac_man = (x, y)->
 				puz_ctx.save()
 				puz_ctx.translate(x, y)
 				puz_ctx.beginPath()
@@ -333,10 +337,10 @@ get_point = (point)->
 			if piece
 				x = piece.puz_x + piece.puz_w/2
 				y = piece.puz_y + piece.puz_h/2
-				draw_plucky_puck(x, y)
+				draw_pac_man(x, y)
 	}
 	{
-		name: "Bo-Ring" # as in a boring ring
+		name: "Bo-ring"
 		t: 0
 		background: "#153958"
 		width: 150 * 5
@@ -348,8 +352,6 @@ get_point = (point)->
 			{
 				t: 0
 				draw: (puz_ctx, key_pieces)->
-					# center = get_point(key_pieces[0]?.points[0])
-					# return unless center
 					piece = key_pieces[0]
 					return unless piece
 					x = piece.puz_x + piece.puz_w/2
@@ -368,7 +370,6 @@ get_point = (point)->
 					puz_ctx.arc(0, -300, 200, 0, TAU, true)
 					puz_ctx.fill()
 					puz_ctx.restore()
-					
 			}
 		]
 	}

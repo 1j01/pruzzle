@@ -145,18 +145,34 @@ get_point = (point)->
 		
 		# maze: new Grid
 		maze:
-			rows: []
+			# rows: []
+			map: new Map
 			get: (x, y)->
-				@rows[y]?[x]
+				# @rows[(y + 5) % 5]?[(x + 5) % 5]
+				# @rows[y]?[x]
+				@map.get("#{x}, #{y}")
 			set: (x, y, val)->
-				@rows[y] ?= []
-				@rows[y][x] = val
+				# @rows[y] ?= []
+				# @rows[y][x] = val
+				@map.set("#{x}, #{y}", val)
+				# # XXX: hardcoded n_pieces_x/y
+				# # @map.set("#{x + 5}, #{y - 5}", val)
+				# # @map.set("#{x - 5}, #{y - 5}", val)
+				# # @map.set("#{x + 5}, #{y + 5}", val)
+				# # @map.set("#{x - 5}, #{y + 5}", val)
+				# @map.set("#{x + 5}, #{y}", val)
+				# @map.set("#{x - 5}, #{y}", val)
+				# @map.set("#{x}, #{y + 5}", val)
+				# @map.set("#{x}, #{y - 5}", val)
 		
 		update: ->
 			
 			# init grid
-			for y_i in [0..@n_pieces_x]
-				for x_i in [0..@n_pieces_y]
+			# @maze.rows = []
+			@maze.map = new Map
+			
+			for x_i in [0...@n_pieces_x]
+				for y_i in [0...@n_pieces_y]
 					
 					cell =
 						sides: [
@@ -172,15 +188,65 @@ get_point = (point)->
 						for side, side_index in cell.sides
 							[side, cell.sides[(side_index + 1) %% cell.sides.length]]
 					
-					@maze.set x_i, y_i, cell
+					@maze.set(x_i, y_i, cell)
+					
+					# @map.set("#{x_i + 5}, #{y_i}", val)
+					# @map.set("#{x_i - 5}, #{y_i}", val)
+					# @map.set("#{x_i}, #{y_i + 5}", val)
+					# @map.set("#{x_i}, #{y_i - 5}", val)
+					
+					# for side in cell.sides
+					# 	wrapped_cell = JSON.parse(JSON.stringify(cell))
+					# 	wrapped_cell.x = x_i + @n_pieces_x * side.dx
+					# 	wrapped_cell.y = y_i + @n_pieces_y * side.dy
+					# 	@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
 			
 			# "generate maze"
-			for maze_row, y_i in @maze.rows
-				for cell, x_i in maze_row
-					cell.open = random() < 0.5
+			# for maze_row, y_i in @maze.rows
+			# 	for cell, x_i in maze_row
 			
-			for maze_row, y_i in @maze.rows
-				for cell, x_i in maze_row
+			for x_i in [0...@n_pieces_x]
+				for y_i in [0...@n_pieces_y]
+					@maze.get(x_i, y_i).open = random() < 0.5
+			
+			# set up wrapping
+			# for x_i in [0..@n_pieces_x-1]
+			# 	@maze.set(x_i, @n_pieces_y-1, @maze.get(x_i, 0))
+			# 	# @maze.set(x_i, -1, @maze.get(x_i, @n_pieces_y-1))
+			# for y_i in [0..@n_pieces_y-1]
+			# 	@maze.set(@n_pieces_y-1, y_i, @maze.get(0, y_i))
+			# 	# @maze.set(-1, y_i, @maze.get(@n_pieces_y-1, y_i))
+			for x_i in [0...@n_pieces_x]
+				for y_i in [0...@n_pieces_y]
+					cell = @maze.get(x_i, y_i)
+					continue unless cell
+					for side in cell.sides
+						wrapped_cell = JSON.parse(JSON.stringify(cell))
+						
+						# NOTE: the sides of the corners need refer to the same side objects as in cell.sides
+						# TODO: DRY, probably make a Cell class
+						wrapped_cell.corners =
+							for _side, _side_index in wrapped_cell.sides
+								[_side, wrapped_cell.sides[(_side_index + 1) %% cell.sides.length]]
+						
+						wrapped_cell.x = x_i + @n_pieces_x * side.dx
+						wrapped_cell.y = y_i + @n_pieces_y * side.dy
+						
+						@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
+			
+			# define walls between open and closed cells
+			# for maze_row, y_i in @maze.rows
+			# 	for cell, x_i in maze_row
+			# for x_i in [0..@n_pieces_x-1]
+			# 	for y_i in [0..@n_pieces_y-1]
+			# for x_i in [-1..@n_pieces_x+1]
+			# 	for y_i in [-1..@n_pieces_y+1]
+			# for x_i in [0..@n_pieces_x]
+			# 	for y_i in [0..@n_pieces_y]
+			for x_i in [-22..@n_pieces_x+22]
+				for y_i in [-22..@n_pieces_y+22]
+					cell = @maze.get(x_i, y_i)
+					continue unless cell
 					for side in cell.sides
 						side.walled = (@maze.get(x_i + side.dx, y_i + side.dy)?.open ? no) isnt cell.open
 		
@@ -192,8 +258,13 @@ get_point = (point)->
 			wall_size = 100
 			inset = (grid_size - wall_size)
 			
-			for maze_row, y_i in @maze.rows
-				for cell, x_i in maze_row
+			# for maze_row, y_i in @maze.rows
+			# 	for cell, x_i in maze_row
+			for x_i in [-22..@n_pieces_x+22]
+				for y_i in [-22..@n_pieces_y+22]
+					cell = @maze.get(x_i, y_i)
+					continue unless cell
+					
 					puz_ctx.save()
 					puz_ctx.translate(x_i * grid_size, y_i * grid_size)
 					
@@ -277,7 +348,9 @@ get_point = (point)->
 						draw_dot(grid_size / 2, grid_size / 2)
 						for side in cell.sides
 							unless side.walled
-								# draw_dot(grid_size / 2 + grid_size / 3 * side.dx, grid_size / 2 + grid_size / 3 * side.dy)
+								# NOTE: dots are drawn overlapping
+								# could iterate over the grid looking at horizontal and vertical pairs of cells
+								# and theoretically improve anti-aliasing
 								draw_dot(grid_size / 2 + grid_size / 2 * side.dx, grid_size / 2 + grid_size / 2 * side.dy)
 
 					puz_ctx.restore()

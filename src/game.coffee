@@ -375,7 +375,8 @@ animate ->
 	ctx.save()
 	ctx.scale(scale, scale)
 	
-	if location.hash.match(/peak/)
+	peak = location.hash.match(/peak/)
+	if peak
 		ctx.drawImage(puz_canvas, 0, 0)
 	
 	ctx.save()
@@ -384,7 +385,7 @@ animate ->
 	# show the puzzle area
 	ctx.beginPath()
 	ctx.rect(0, 0, puzzle.width, puzzle.height)
-	ctx.fillStyle = "rgba(0, 0, 0, 0.1)"
+	ctx.fillStyle = "rgba(0, 0, 0, #{if peak then 0.5 else 0.1})"
 	ctx.fill()
 	
 	# draw grid lines

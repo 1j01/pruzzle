@@ -195,14 +195,18 @@ get_point = (point)->
 					y: y
 				
 				cell.corners =
-					for side, side_index in cell.sides
-						[side, cell.sides[(side_index + 1) %% cell.sides.length]]
+					for side_a, side_a_index in cell.sides
+						side_b = cell.sides[(side_a_index + 1) %% cell.sides.length]
+						# walled = side_a.walled or side_b.walled
+						dx = side_a.dx + side_b.dx
+						dy = side_a.dy + side_b.dy
+						{side_a, side_b, dx, dy}
 				
 				@maze.set(x, y, cell)
 			
 			# "generate maze"
 			@each_grid_cell (cell)=>
-				cell.open = random() < 0.5
+				cell.open = random() < 0.8
 			
 			# put_cell = (x, y)=>
 			# 	@maze.get(x, y).open = false
@@ -216,25 +220,38 @@ get_point = (point)->
 			
 			# put_thing(2, 2)
 			
-			# for [0..3]
-			# 	@each_grid_cell (cell)=>
-			# 		# above = @maze.get(cell.x, cell.y - 1)
-			# 		# below = @maze.get(cell.x, cell.y + 1)
-			# 		# if above?.open and below?.open
-			# 			# cell.open = false
-			# 		if cell.open
-			# 			for side in cell.sides
-			# 				ahead = @maze.get(cell.x + side.dx, cell.y + side.dy)
-			# 				behind = @maze.get(cell.x - side.dx, cell.y - side.dy)
-			# 				left_maybe = @maze.get(cell.x - side.dy, cell.y - side.dx)
-			# 				right_maybe = @maze.get(cell.x + side.dy, cell.y + side.dx)
-			# 				# if ahead?.open and left_maybe?.open and (not right_maybe.open)
-			# 				# 	cell.open = false
-			# 				# if ahead?.open and (not left_maybe?.open) and right_maybe.open
-			# 				# 	cell.open = false
-			# 				# console.log cell, side, ahead, "um", cell.x + side.dx, cell.y + side.dy, @maze
-			# 				if ahead.open
-			# 					cell.open = false
+			for [0..3]
+				@each_grid_cell (cell)=>
+					n_neighbors_open = 0
+					neighbor_cells = []
+					for {dx, dy} in [cell.sides..., cell.corners...]
+						neighbor_cell = @getWrapped(cell.x + dx, cell.y + dy)
+						neighbor_cells.push(neighbor_cell)
+						n_neighbors_open += 1 if neighbor_cell.open
+					# above = @getWrapped(cell.x, cell.y - 1)
+					# below = @getWrapped(cell.x, cell.y + 1)
+					# left = @getWrapped(cell.x, cell.y + 1)
+					# right = @getWrapped(cell.x, cell.y - 1)
+					# if above.open and below.open and (left.open and right.open)
+					# 	cell.open = false
+					# if cell.open
+					# 	for side in cell.sides
+					# 		ahead = @getWrapped(cell.x + side.dx, cell.y + side.dy)
+					# 		behind = @getWrapped(cell.x - side.dx, cell.y - side.dy)
+					# 		left_maybe = @getWrapped(cell.x - side.dy, cell.y - side.dx)
+					# 		right_maybe = @getWrapped(cell.x + side.dy, cell.y + side.dx)
+					# 		# if ahead.open and left_maybe.open and (not right_maybe.open)
+					# 		# 	cell.open = false
+					# 		# if ahead.open and (not left_maybe.open) and right_maybe.open
+					# 		# 	cell.open = false
+					# 		# console.log cell, side, ahead, "um", cell.x + side.dx, cell.y + side.dy, @maze
+					# 		# if ahead.open
+					# 		# 	cell.open = false
+					if n_neighbors_open > 4
+						cell.open = false
+			
+			@each_grid_cell (cell)=>
+				cell.open = not cell.open
 			
 			# define walls between open and closed cells
 			@each_visible_cell (cell)=>
@@ -307,22 +324,22 @@ get_point = (point)->
 										(grid_size + wall_size * (side.dy or around.d)) / 2
 									)
 				
-				for [side_a, side_b] in cell.corners
-					unless side_a.walled or side_b.walled
+				for corner in cell.corners
+					unless corner.side_a.walled or corner.side_b.walled
 						if (
 							@getWrapped(
-								x + side_a.dx + side_b.dx
-								y + side_a.dy + side_b.dy
+								x + corner.dx
+								y + corner.dy
 							)?.open ? no
 						) isnt cell.open
 							
 							puz_ctx.stroke()
 							puz_ctx.beginPath()
 							
-							angle = Math.atan2(side_a.dy, side_a.dx)
+							angle = Math.atan2(corner.side_a.dy, corner.side_a.dx)
 							puz_ctx.arc(
-								(grid_size / 2 + wall_size * (side_a.dx + side_b.dx))
-								(grid_size / 2 + wall_size * (side_a.dy + side_b.dy))
+								(grid_size / 2 + wall_size * corner.dx)
+								(grid_size / 2 + wall_size * corner.dy)
 								inset
 								angle - TAU/2, angle - TAU/4
 							)

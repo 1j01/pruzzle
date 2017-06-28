@@ -160,8 +160,10 @@ get_point = (point)->
 		
 		each_visible_cell_location: (callback)->
 			# TODO: actually use viewport information?
-			for x_i in [-22..@n_pieces_x+22]
-				for y_i in [-22..@n_pieces_y+22]
+			# or just do the cells just outside the grid
+			# and make the key pieces be apparently static
+			for x_i in [-1..@n_pieces_x]
+				for y_i in [-1..@n_pieces_y]
 					callback(x_i, y_i)
 		
 		each_visible_cell: (callback)->
@@ -216,21 +218,20 @@ get_point = (point)->
 			# 		cell.open = false
 			
 			# set up wrapping
-			# TODO: wrap towards the corners as well, anywhere visible
-			@each_grid_cell (cell)=>
-				for side in cell.sides
-					wrapped_cell = JSON.parse(JSON.stringify(cell))
-					
-					# NOTE: the sides of the corners need to refer to the instances in cell.sides
-					# TODO: DRY, probably make a Cell class
-					wrapped_cell.corners =
-						for _side, _side_index in wrapped_cell.sides
-							[_side, wrapped_cell.sides[(_side_index + 1) %% cell.sides.length]]
-					
-					wrapped_cell.x = cell.x + @n_pieces_x * side.dx
-					wrapped_cell.y = cell.y + @n_pieces_y * side.dy
-					
-					@maze.set(wrapped_cell.x, wrapped_cell.y, wrapped_cell)
+			@each_visible_cell_location (x, y)=>
+				source_cell = @maze.get((x + 5 * 10000) % 5, (y + 5 * 10000) % 5)
+				
+				wrapped_cell = JSON.parse(JSON.stringify(source_cell))
+				
+				# NOTE: the sides of the corners need to refer to the instances in wrapped_cell.sides
+				# TODO: DRY, probably make a Cell class
+				wrapped_cell.corners =
+					for _side, _side_index in wrapped_cell.sides
+						[_side, wrapped_cell.sides[(_side_index + 1) %% source_cell.sides.length]]
+				
+				wrapped_cell.x = x
+				wrapped_cell.y = y
+				@maze.set(x, y, wrapped_cell)
 			
 			# define walls between open and closed cells
 			@each_visible_cell (cell)=>

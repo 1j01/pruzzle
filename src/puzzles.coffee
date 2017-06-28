@@ -130,10 +130,10 @@ get_point = (point)->
 		
 		t: 0
 		background: "#000920"
-		width: 150 * 5
-		height: 150 * 5
-		n_pieces_x: 5
-		n_pieces_y: 5
+		width: 150 * 8
+		height: 150 * 8
+		n_pieces_x: 8
+		n_pieces_y: 8
 		n_keys: 5
 		# TODO: show a patch of maze grid on the key pieces
 		# and apply it when placing the piece
@@ -147,6 +147,11 @@ get_point = (point)->
 				@map.get("#{x}, #{y}")
 			set: (x, y, val)->
 				@map.set("#{x}, #{y}", val)
+		
+		getWrapped: (x, y)->
+			x = (x + @n_pieces_x * 10000) % @n_pieces_x
+			y = (y + @n_pieces_y * 10000) % @n_pieces_y
+			@maze.get(x, y)
 		
 		each_grid_cell_location: (callback)->
 			for x_i in [0...@n_pieces_x]
@@ -168,9 +173,9 @@ get_point = (point)->
 		
 		each_visible_cell: (callback)->
 			@each_visible_cell_location (x, y)=>
-				cell = @maze.get(x, y)
+				cell = @getWrapped(x, y)
 				if cell
-					callback(cell)
+					callback(cell, x, y)
 		
 		update: ->
 			
@@ -211,33 +216,31 @@ get_point = (point)->
 			
 			# put_thing(2, 2)
 			
-			# @each_grid_cell (cell)=>
-			# 	above = @maze.get(cell.x, cell.y - 1)
-			# 	below = @maze.get(cell.x, cell.y + 1)
-			# 	if above?.open and below?.open
-			# 		cell.open = false
-			
-			# set up wrapping
-			@each_visible_cell_location (x, y)=>
-				source_cell = @maze.get((x + 5 * 10000) % 5, (y + 5 * 10000) % 5)
-				
-				wrapped_cell = JSON.parse(JSON.stringify(source_cell))
-				
-				# NOTE: the sides of the corners need to refer to the instances in wrapped_cell.sides
-				# TODO: DRY, probably make a Cell class
-				wrapped_cell.corners =
-					for _side, _side_index in wrapped_cell.sides
-						[_side, wrapped_cell.sides[(_side_index + 1) %% source_cell.sides.length]]
-				
-				wrapped_cell.x = x
-				wrapped_cell.y = y
-				@maze.set(x, y, wrapped_cell)
+			# for [0..3]
+			# 	@each_grid_cell (cell)=>
+			# 		# above = @maze.get(cell.x, cell.y - 1)
+			# 		# below = @maze.get(cell.x, cell.y + 1)
+			# 		# if above?.open and below?.open
+			# 			# cell.open = false
+			# 		if cell.open
+			# 			for side in cell.sides
+			# 				ahead = @maze.get(cell.x + side.dx, cell.y + side.dy)
+			# 				behind = @maze.get(cell.x - side.dx, cell.y - side.dy)
+			# 				left_maybe = @maze.get(cell.x - side.dy, cell.y - side.dx)
+			# 				right_maybe = @maze.get(cell.x + side.dy, cell.y + side.dx)
+			# 				# if ahead?.open and left_maybe?.open and (not right_maybe.open)
+			# 				# 	cell.open = false
+			# 				# if ahead?.open and (not left_maybe?.open) and right_maybe.open
+			# 				# 	cell.open = false
+			# 				# console.log cell, side, ahead, "um", cell.x + side.dx, cell.y + side.dy, @maze
+			# 				if ahead.open
+			# 					cell.open = false
 			
 			# define walls between open and closed cells
 			@each_visible_cell (cell)=>
 				for side in cell.sides
 					side.walled = (
-						@maze.get(
+						@getWrapped(
 							cell.x + side.dx
 							cell.y + side.dy
 						)?.open ? no
@@ -252,9 +255,9 @@ get_point = (point)->
 			wall_size = 100
 			inset = (grid_size - wall_size)
 			
-			@each_visible_cell (cell)=>
+			@each_visible_cell (cell, x, y)=>
 				puz_ctx.save()
-				puz_ctx.translate(cell.x * grid_size, cell.y * grid_size)
+				puz_ctx.translate(x * grid_size, y * grid_size)
 				
 				puz_ctx.beginPath()
 				puz_ctx.strokeStyle = "blue"
@@ -289,9 +292,9 @@ get_point = (point)->
 								)
 							else
 								if (
-									@maze.get(
-										cell.x + side.dx + around.side.dx
-										cell.y + side.dy + around.side.dy
+									@getWrapped(
+										x + side.dx + around.side.dx
+										y + side.dy + around.side.dy
 									)?.open ? no
 								) isnt cell.open
 									puz_ctx.lineTo(
@@ -307,9 +310,9 @@ get_point = (point)->
 				for [side_a, side_b] in cell.corners
 					unless side_a.walled or side_b.walled
 						if (
-							@maze.get(
-								cell.x + side_a.dx + side_b.dx
-								cell.y + side_a.dy + side_b.dy
+							@getWrapped(
+								x + side_a.dx + side_b.dx
+								y + side_a.dy + side_b.dy
 							)?.open ? no
 						) isnt cell.open
 							
@@ -334,11 +337,8 @@ get_point = (point)->
 					
 				if cell.open
 					draw_dot(grid_size / 2, grid_size / 2)
-					for side in cell.sides
+					for side in cell.sides when side.dx > 0 or side.dy > 0
 						unless side.walled
-							# NOTE: dots are drawn overlapping
-							# could iterate over the grid looking at horizontal and vertical pairs of cells
-							# and theoretically improve anti-aliasing
 							draw_dot(grid_size / 2 + grid_size / 2 * side.dx, grid_size / 2 + grid_size / 2 * side.dy)
 
 				puz_ctx.restore()

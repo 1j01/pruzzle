@@ -337,8 +337,10 @@ reveal_next_piece = ->
 
 do update_from_hash = ->
 	lvl_n = parseInt(location.hash.replace("#", ""))
-	puzzle = puzzles[lvl_n] ? puzzles[0]
-	start_puzzle()
+	go_to_puzzle = puzzles[lvl_n] ? puzzles[0]
+	if go_to_puzzle isnt puzzle
+		puzzle = go_to_puzzle
+		start_puzzle()
 
 addEventListener "hashchange", update_from_hash
 

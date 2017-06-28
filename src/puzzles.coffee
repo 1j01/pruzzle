@@ -148,46 +148,72 @@ get_point = (point)->
 			set: (x, y, val)->
 				@map.set("#{x}, #{y}", val)
 		
-		each_grid_cell: (callback)->
+		each_grid_cell_location: (callback)->
 			for x_i in [0...@n_pieces_x]
 				for y_i in [0...@n_pieces_y]
-					cell = @maze.get(x_i, y_i)
-					callback(cell)
+					callback(x_i, y_i)
 		
-		each_visible_cell: (callback)->
+		each_grid_cell: (callback)->
+			@each_grid_cell_location (x, y)=>
+				cell = @maze.get(x, y)
+				callback(cell)
+		
+		each_visible_cell_location: (callback)->
 			# TODO: actually use viewport information?
 			for x_i in [-22..@n_pieces_x+22]
 				for y_i in [-22..@n_pieces_y+22]
-					cell = @maze.get(x_i, y_i)
-					if cell
-						callback(cell)
+					callback(x_i, y_i)
+		
+		each_visible_cell: (callback)->
+			@each_visible_cell_location (x, y)=>
+				cell = @maze.get(x, y)
+				if cell
+					callback(cell)
 		
 		update: ->
 			
 			# init grid
 			@maze.map = new Map
-			for x_i in [0...@n_pieces_x]
-				for y_i in [0...@n_pieces_y]
-					
-					cell =
-						sides: [
-							{dx: +1, dy: 0, name: "right", open: no}
-							{dx: 0, dy: +1, name: "down", open: no}
-							{dx: -1, dy: 0, name: "left", open: no}
-							{dx: 0, dy: -1, name: "up", open: no}
-						]
-						x: x_i
-						y: y_i
-					
-					cell.corners =
-						for side, side_index in cell.sides
-							[side, cell.sides[(side_index + 1) %% cell.sides.length]]
-					
-					@maze.set(x_i, y_i, cell)
+			@each_grid_cell_location (x, y)=>
+				
+				cell =
+					open: true
+					sides: [
+						{dx: +1, dy: 0, name: "right", open: no}
+						{dx: 0, dy: +1, name: "down", open: no}
+						{dx: -1, dy: 0, name: "left", open: no}
+						{dx: 0, dy: -1, name: "up", open: no}
+					]
+					x: x
+					y: y
+				
+				cell.corners =
+					for side, side_index in cell.sides
+						[side, cell.sides[(side_index + 1) %% cell.sides.length]]
+				
+				@maze.set(x, y, cell)
 			
 			# "generate maze"
 			@each_grid_cell (cell)=>
 				cell.open = random() < 0.5
+			
+			# put_cell = (x, y)=>
+			# 	@maze.get(x, y).open = false
+			# 	@maze.get(@n_pieces_x - x, y).open = false
+			
+			# put_thing = (x, y)=>
+			# 	put_cell(x, y)
+			# 	put_cell(x + 1, y)
+			# 	put_cell(x - 1, y)
+			# 	put_cell(x, y + 1)
+			
+			# put_thing(2, 2)
+			
+			# @each_grid_cell (cell)=>
+			# 	above = @maze.get(cell.x, cell.y - 1)
+			# 	below = @maze.get(cell.x, cell.y + 1)
+			# 	if above?.open and below?.open
+			# 		cell.open = false
 			
 			# set up wrapping
 			# TODO: wrap towards the corners as well, anywhere visible

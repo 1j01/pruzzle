@@ -23,6 +23,13 @@
 		<link rel="stylesheet" type="text/css" href="lib/dialog-polyfill.css" />
 		<div id="controls">
 			<button id="open-restart-dialogue"></button><!--<button id="toggle-mute" class="mute"></button>--><button id="fullscreen"></button>
+			<span id="note">
+				This is just a prototype. No puzzles are finished, but you can see a few vague ideas:
+				<a href="#1">#1</a>, <a href="#2">#2</a>
+			</span>
+		</div>
+		<div style="position: absolute; left: 0; bottom: 0; pointer-events: none; font-size: 1.5em;">
+			Key pieces are placed first and get locked in place.
 		</div>
 		<style>
 			html, body, canvas {
@@ -49,6 +56,11 @@
 				position: absolute;
 				top: 0;
 				font-size: 1.8em;
+				pointer-events: none;
+			}
+			#controls button,
+			#controls a {
+				pointer-events: auto;
 			}
 			#controls button {
 				width: 4em;
@@ -116,6 +128,11 @@
 			button:active {
 				background-color: #377EF4;
 				outline: 1px solid white;
+			}
+			#note {
+				font-size: 0.8em;
+				vertical-align: top;
+				line-height: 2;
 			}
 		</style>
 		<dialog id="restart-dialogue">

@@ -124,9 +124,10 @@ get_point = (point)->
 	}
 	{
 		name: "Pac-Man"
-		# name: "Onho its gOust hhhrun"
 		# name: "Casper the Friendly Ghost Buster"
-		# name: "Plucky Pizza Pie Puck Person vs The Wrathful Wraiths"
+		# name: "Plucky Pizza Pie Puck Person vs The Wrathfully Wrapping Wraiths"
+		# name: "Wraith Wrangler"
+		# name: "Wrappy Herd"
 		
 		t: 0
 		background: "#000920"
